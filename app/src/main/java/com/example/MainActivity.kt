@@ -233,30 +233,25 @@ fun MainScreen(
     var isValidDirectory by remember { mutableStateOf(false) }
     val childrenDirs = remember { mutableStateListOf<File>() }
 
-    LaunchedEffect(targetPath, showBrowser) {
-        if (showBrowser) {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    val d = File(targetPath)
-                    val valid = d.exists() && d.isDirectory
-                    val subdirs = if (valid) {
-                        d.listFiles { f -> f.isDirectory }
-                            ?.sortedBy { it.name.lowercase() } ?: emptyList()
-                    } else {
-                        emptyList()
-                    }
-                    valid to subdirs
-                } catch (e: Exception) {
-                    false to emptyList<File>()
+    LaunchedEffect(targetPath) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val d = File(targetPath)
+                val valid = d.exists() && d.isDirectory
+                val subdirs = if (valid) {
+                    d.listFiles { f -> f.isDirectory }
+                        ?.sortedBy { it.name.lowercase() } ?: emptyList()
+                } else {
+                    emptyList()
                 }
-            }.let { (valid, subdirs) ->
-                isValidDirectory = valid
-                childrenDirs.clear()
-                childrenDirs.addAll(subdirs)
+                valid to subdirs
+            } catch (e: Exception) {
+                false to emptyList<File>()
             }
-        } else {
-            isValidDirectory = false
+        }.let { (valid, subdirs) ->
+            isValidDirectory = valid
             childrenDirs.clear()
+            childrenDirs.addAll(subdirs)
         }
     }
 
@@ -451,7 +446,7 @@ fun MainScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "by BlazeFTL",
+                        text = "By BlazeFTL",
                         style = androidx.compose.ui.text.TextStyle(
                             color = BoldTextSecondary,
                             fontWeight = FontWeight.SemiBold,
@@ -1284,7 +1279,7 @@ fun MainScreen(
                 Column {
                     Text("Flattener Settings Options", fontWeight = FontWeight.Bold, color = BoldTextPrimary)
                     Text(
-                        text = "by BlazeFTL",
+                        text = "By BlazeFTL",
                         style = androidx.compose.ui.text.TextStyle(
                             color = BoldTextSecondary,
                             fontWeight = FontWeight.SemiBold,
