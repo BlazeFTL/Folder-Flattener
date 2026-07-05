@@ -1,0 +1,6 @@
+{
+  "name": "Folder Untangler",
+  "description": "Clean up, flatten, and untangle subfolder clutter from downloaded folders with precision and transparency.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
