@@ -108,12 +108,16 @@ fun MainScreen(
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
     val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
+    val showSystemPicker by viewModel.showSystemPicker.collectAsStateWithLifecycle()
 
     val BoldPrimary = when (currentTheme) {
         ThemeStyle.FOREST_MINT -> Color(0xFF2E6B48)
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF6200EE)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF0284C7)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFD97706)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFDC2626)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1D4ED8)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF9CA3AF)
     }
 
     val BoldBackground = when (currentTheme) {
@@ -121,6 +125,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFFFBF8FF)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFFF0F9FF)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFFFBEB)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEF2F2)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFEFF6FF)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF111827)
     }
 
     val BoldTextPrimary = when (currentTheme) {
@@ -128,6 +135,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF1C0D30)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF0C4A6E)
         ThemeStyle.SUNSET_AMBER -> Color(0xFF78350F)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF7F1D1D)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E3A8A)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFF9FAFB)
     }
 
     val BoldTextSecondary = when (currentTheme) {
@@ -135,6 +145,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF564966)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF334155)
         ThemeStyle.SUNSET_AMBER -> Color(0xFF78716C)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF991B1B)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E40AF)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF9CA3AF)
     }
 
     val BoldSurfaceVar = when (currentTheme) {
@@ -142,6 +155,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFFF0E5FC)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFFE0F2FE)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEE2E2)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFDBEAFE)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF1F2937)
     }
 
     val BoldActivePurple = when (currentTheme) {
@@ -149,6 +165,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFFE4D3FC)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF7DD3FC)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFCD34D)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFECACA)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFBFDBFE)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF374151)
     }
 
     val BoldTextAmethyst = when (currentTheme) {
@@ -156,6 +175,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF320094)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF0369A1)
         ThemeStyle.SUNSET_AMBER -> Color(0xFF92400E)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF450A0A)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF172554)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFE5E7EB)
     }
 
     val BoldSoftBlue = when (currentTheme) {
@@ -163,6 +185,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFFE8E0FF)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFFE0F2FE)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEE2E2)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFDBEAFE)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF1F2937)
     }
 
     val BoldTextNavy = when (currentTheme) {
@@ -170,6 +195,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF12003D)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF0B3B59)
         ThemeStyle.SUNSET_AMBER -> Color(0xFF451A03)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF450A0A)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF172554)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFF9FAFB)
     }
 
     val BoldBorder = when (currentTheme) {
@@ -177,6 +205,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFFD8C4F6)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFFBAE6FD)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFDE68A)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFCA5A5)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF93C5FD)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF4B5563)
     }
 
     val BoldTerminalBg = BoldBackground
@@ -187,6 +218,9 @@ fun MainScreen(
         ThemeStyle.ROYAL_AMETHYST -> Color(0xFF8A00FF)
         ThemeStyle.NORDIC_OCEAN -> Color(0xFF0EA5E9)
         ThemeStyle.SUNSET_AMBER -> Color(0xFFEA580C)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFDC2626)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF2563EB)
+        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF10B981)
     }
 
     val terminalListState = rememberLazyListState()
@@ -382,44 +416,22 @@ fun MainScreen(
                             letterSpacing = (-0.5).sp
                         )
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "by BlazeFTL",
+                        style = androidx.compose.ui.text.TextStyle(
+                            color = BoldTextSecondary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
                 }
                 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // History Icon Button
-                    IconButton(
-                        onClick = { showHistoryDialog = true },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(BoldActivePurple)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "View folder history logs",
-                            tint = BoldTextAmethyst,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Auto Schedule Icon Button
-                    IconButton(
-                        onClick = { showSchedulerDialog = true },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(BoldActivePurple)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = "View automation schedules details",
-                            tint = BoldTextAmethyst,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
                     // Settings Icon Button
                     IconButton(
                         onClick = { showSettingsDialog = true },
@@ -604,24 +616,25 @@ fun MainScreen(
                     }
 
                     // Fallback system picker
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        TextButton(
-                            onClick = { directoryPickerLauncher.launch(null) }
+                    if (showSystemPicker) {
+                        Button(
+                            onClick = { directoryPickerLauncher.launch(null) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BoldSurfaceVar,
+                                contentColor = BoldPrimary
+                            ),
+                            border = BorderStroke(1.5.dp, BoldBorder),
+                            shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
                                 contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = BoldTextSecondary
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Use System Storage Picker (External SD Card/USB Only)",
-                                fontSize = 11.sp,
-                                color = BoldTextSecondary,
+                                "Use System Storage Picker (External/SD)",
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1380,36 +1393,149 @@ fun MainScreen(
                         )
                     }
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Show System Storage Picker", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
+                        Switch(
+                            checked = showSystemPicker,
+                            onCheckedChange = { viewModel.toggleSystemPicker(it) },
+                            colors = SwitchDefaults.colors(checkedTrackColor = BoldPrimary)
+                        )
+                    }
+
+                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
+
+                    Text("Quick Access Utilities", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(BoldSurfaceVar)
+                            .clickable {
+                                showSettingsDialog = false
+                                showHistoryDialog = true
+                            }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(BoldActivePurple),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = BoldTextAmethyst,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                "Folder History Logs",
+                                fontWeight = FontWeight.Bold,
+                                color = BoldTextPrimary,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                "View logs of past flattener operations",
+                                color = BoldTextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(BoldSurfaceVar)
+                            .clickable {
+                                showSettingsDialog = false
+                                showSchedulerDialog = true
+                            }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(BoldActivePurple),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = BoldTextAmethyst,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                "Auto Clean Status",
+                                fontWeight = FontWeight.Bold,
+                                color = BoldTextPrimary,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                "Check scheduler background tasks",
+                                color = BoldTextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
                     HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
 
                     Text("App Theme Style", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        ThemeStyle.values().forEach { style ->
-                            val isSelected = style == currentTheme
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) BoldPrimary else BoldSurfaceVar)
-                                    .clickable { viewModel.setThemeStyle(style) }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        ThemeStyle.values().toList().chunked(3).forEach { rowStyles ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = when (style) {
-                                        ThemeStyle.FOREST_MINT -> "Mint"
-                                        ThemeStyle.ROYAL_AMETHYST -> "Amethyst"
-                                        ThemeStyle.NORDIC_OCEAN -> "Ocean"
-                                        ThemeStyle.SUNSET_AMBER -> "Amber"
-                                    },
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.White else BoldTextPrimary
-                                )
+                                rowStyles.forEach { style ->
+                                    val isSelected = style == currentTheme
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isSelected) BoldPrimary else BoldSurfaceVar)
+                                            .clickable { viewModel.setThemeStyle(style) }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when (style) {
+                                                ThemeStyle.FOREST_MINT -> "Mint"
+                                                ThemeStyle.ROYAL_AMETHYST -> "Amethyst"
+                                                ThemeStyle.NORDIC_OCEAN -> "Ocean"
+                                                ThemeStyle.SUNSET_AMBER -> "Amber"
+                                                ThemeStyle.CRIMSON_CHERRY -> "Crimson"
+                                                ThemeStyle.DEEP_SAPPHIRE -> "Sapphire"
+                                                ThemeStyle.MIDNIGHT_ONYX -> "Midnight"
+                                            },
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else BoldTextPrimary
+                                        )
+                                    }
+                                }
+                                if (rowStyles.size < 3) {
+                                    repeat(3 - rowStyles.size) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }

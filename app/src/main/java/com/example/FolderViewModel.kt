@@ -18,7 +18,10 @@ enum class ThemeStyle(val displayName: String) {
     FOREST_MINT("Forest Mint"),
     ROYAL_AMETHYST("Royal Amethyst"),
     NORDIC_OCEAN("Nordic Ocean"),
-    SUNSET_AMBER("Sunset Amber")
+    SUNSET_AMBER("Sunset Amber"),
+    CRIMSON_CHERRY("Crimson Cherry"),
+    DEEP_SAPPHIRE("Deep Sapphire"),
+    MIDNIGHT_ONYX("Midnight Onyx")
 }
 
 class FolderViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,8 +47,15 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
     )
     val targetPath: StateFlow<String> = _targetPath.asStateFlow()
 
-    private val _isDryRun = MutableStateFlow(true)
+    private val _isDryRun = MutableStateFlow(
+        sharedPrefs.getBoolean("is_dry_run", true)
+    )
     val isDryRun: StateFlow<Boolean> = _isDryRun.asStateFlow()
+
+    private val _showSystemPicker = MutableStateFlow(
+        sharedPrefs.getBoolean("show_system_picker", true)
+    )
+    val showSystemPicker: StateFlow<Boolean> = _showSystemPicker.asStateFlow()
 
     private val _hasPermission = MutableStateFlow(false)
     val hasPermission: StateFlow<Boolean> = _hasPermission.asStateFlow()
@@ -99,6 +109,12 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleDryRun(value: Boolean) {
         _isDryRun.value = value
+        sharedPrefs.edit().putBoolean("is_dry_run", value).apply()
+    }
+
+    fun toggleSystemPicker(value: Boolean) {
+        _showSystemPicker.value = value
+        sharedPrefs.edit().putBoolean("show_system_picker", value).apply()
     }
 
     private fun addToHistory(path: String) {
