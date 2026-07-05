@@ -1,21 +1,65 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Folder Flattener
 
-# Run and deploy your AI Studio app
+An Android app that flattens subdirectory structures.
 
-This contains everything you need to run your app locally.
+## What It Does
 
-View your app in AI Studio: https://ai.studio/apps/94aa3ae2-9155-45dc-aeb6-07d8313a44a3
+For each top-level folder:
+- If it contains a **subfolder**, moves all files from that subfolder up one level and removes the empty subfolder.
+- If the folder then contains a **single file**, moves that file to the parent directory and removes the now-empty folder.
 
-## Run Locally
+**Example:**
+Step 1: It looks inside a folder. If it finds an inner subfolder (like data inside Android), it pulls the contents up into the parent folder and deletes the empty inner folder.
+Step 2: Right after, it checks if that folder now contains only a single file (like File.txt or your newly flattened folders). If it does, it moves that file out to the main directory and deletes the empty parent folder.
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+Hidden files/folders are left untouched.
+<img width="702" height="1560" alt="Screenshot_20260618-102658_Spark Launcher" src="https://github.com/user-attachments/assets/1b7f62fa-078d-4811-ab99-2b4c359b2579" />
+<img width="702" height="1560" alt="Screenshot_20260618-102710_Spark Launcher" src="https://github.com/user-attachments/assets/c6359d00-1053-4259-a0a7-275bf3c8167d" />
 
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
+</p>
+</details>
+
+## Equivalent Shell Logic
+
+```sh
+cd "/storage/emulated/0/Folder/SubFolder" && \
+for d in */; do
+  d=${d%/}
+  subdir=$(find "$d" -mindepth 1 -maxdepth 1 -type d | head -n 1)
+  if [ -n "$subdir" ]; then
+    mv "$subdir"/* "$d/" 2>/dev/null
+    rmdir "$subdir" 2>/dev/null
+  fi
+  [ $(find "$d" -maxdepth 1 | wc -l) -eq 2 ] && [ -f "$d"/* ] && \
+    mv "$d"/* . 2>/dev/null && rmdir "$d"
+done
+```
+
+## Download
+
+Head to [**Releases**](../../releases/latest) and download the latest `.apk`.
+
+## Install
+
+1. Enable **Install unknown apps** for your browser/file manager in Settings.
+2. Open the downloaded APK and tap **Install**.
+
+## Permissions Required
+
+- `READ_EXTERNAL_STORAGE`
+- `WRITE_EXTERNAL_STORAGE` / `MANAGE_EXTERNAL_STORAGE` (Android 11+)
+
+## Requirements
+
+- Android 8.0+
+
+## Usage
+
+1. Open the app.
+2. Tap **Run**.
+3. Review the log output for moved/flattened entries.
+
+## License
+
+MIT
