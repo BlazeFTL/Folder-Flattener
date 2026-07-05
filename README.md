@@ -13,8 +13,7 @@ Step 1: It looks inside a folder. If it finds an inner subfolder (like data insi
 Step 2: Right after, it checks if that folder now contains only a single file (like File.txt or your newly flattened folders). If it does, it moves that file out to the main directory and deletes the empty parent folder.
 
 Hidden files/folders are left untouched.
-<img width="702" height="1560" alt="Screenshot_20260618-102658_Spark Launcher" src="https://github.com/user-attachments/assets/1b7f62fa-078d-4811-ab99-2b4c359b2579" />
-<img width="702" height="1560" alt="Screenshot_20260618-102710_Spark Launcher" src="https://github.com/user-attachments/assets/c6359d00-1053-4259-a0a7-275bf3c8167d" />
+<img width="702" height="1560" alt="Screenshot_20260705-145221_Spark Launcher" src="https://github.com/user-attachments/assets/05e490ee-29e6-4239-936e-818dc95fafe7" />
 
 
 </p>
