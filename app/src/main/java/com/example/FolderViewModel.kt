@@ -21,7 +21,7 @@ enum class ThemeStyle(val displayName: String) {
     SUNSET_AMBER("Sunset Amber"),
     CRIMSON_CHERRY("Crimson Cherry"),
     DEEP_SAPPHIRE("Deep Sapphire"),
-    MIDNIGHT_ONYX("Midnight Onyx")
+    RED_PEACH("Red Peach")
 }
 
 class FolderViewModel(application: Application) : AndroidViewModel(application) {

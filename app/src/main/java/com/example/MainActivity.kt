@@ -117,7 +117,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFD97706)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFDC2626)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1D4ED8)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF9CA3AF)
+        ThemeStyle.RED_PEACH -> Color(0xFFE05A47)
     }
 
     val BoldBackground = when (currentTheme) {
@@ -127,7 +127,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFFFBEB)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEF2F2)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFEFF6FF)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF111827)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFF5F2)
     }
 
     val BoldTextPrimary = when (currentTheme) {
@@ -137,7 +137,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFF78350F)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFF7F1D1D)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E3A8A)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFF9FAFB)
+        ThemeStyle.RED_PEACH -> Color(0xFF5E2218)
     }
 
     val BoldTextSecondary = when (currentTheme) {
@@ -147,7 +147,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFF78716C)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFF991B1B)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E40AF)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF9CA3AF)
+        ThemeStyle.RED_PEACH -> Color(0xFF8B5147)
     }
 
     val BoldSurfaceVar = when (currentTheme) {
@@ -157,7 +157,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEE2E2)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFDBEAFE)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF1F2937)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFE5DE)
     }
 
     val BoldActivePurple = when (currentTheme) {
@@ -167,7 +167,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFCD34D)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFECACA)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFBFDBFE)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF374151)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFD1C4)
     }
 
     val BoldTextAmethyst = when (currentTheme) {
@@ -177,7 +177,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFF92400E)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFF450A0A)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF172554)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFE5E7EB)
+        ThemeStyle.RED_PEACH -> Color(0xFF7D2214)
     }
 
     val BoldSoftBlue = when (currentTheme) {
@@ -187,7 +187,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEE2E2)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFDBEAFE)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF1F2937)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFE5DE)
     }
 
     val BoldTextNavy = when (currentTheme) {
@@ -197,7 +197,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFF451A03)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFF450A0A)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF172554)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFFF9FAFB)
+        ThemeStyle.RED_PEACH -> Color(0xFF5E2218)
     }
 
     val BoldBorder = when (currentTheme) {
@@ -207,7 +207,7 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFFDE68A)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFCA5A5)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF93C5FD)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF4B5563)
+        ThemeStyle.RED_PEACH -> Color(0xFFF7C2B7)
     }
 
     val BoldTerminalBg = BoldBackground
@@ -220,17 +220,45 @@ fun MainScreen(
         ThemeStyle.SUNSET_AMBER -> Color(0xFFEA580C)
         ThemeStyle.CRIMSON_CHERRY -> Color(0xFFDC2626)
         ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF2563EB)
-        ThemeStyle.MIDNIGHT_ONYX -> Color(0xFF10B981)
+        ThemeStyle.RED_PEACH -> Color(0xFFE05A47)
     }
 
     val terminalListState = rememberLazyListState()
 
     var showBrowser by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
-    var showHistoryDialog by remember { mutableStateOf(false) }
-    var showSchedulerDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showInternalFolderPicker by remember { mutableStateOf(false) }
+
+    var isValidDirectory by remember { mutableStateOf(false) }
+    val childrenDirs = remember { mutableStateListOf<File>() }
+
+    LaunchedEffect(targetPath, showBrowser) {
+        if (showBrowser) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val d = File(targetPath)
+                    val valid = d.exists() && d.isDirectory
+                    val subdirs = if (valid) {
+                        d.listFiles { f -> f.isDirectory }
+                            ?.sortedBy { it.name.lowercase() } ?: emptyList()
+                    } else {
+                        emptyList()
+                    }
+                    valid to subdirs
+                } catch (e: Exception) {
+                    false to emptyList<File>()
+                }
+            }.let { (valid, subdirs) ->
+                isValidDirectory = valid
+                childrenDirs.clear()
+                childrenDirs.addAll(subdirs)
+            }
+        } else {
+            isValidDirectory = false
+            childrenDirs.clear()
+        }
+    }
 
     // Scroll automatically to end of terminal logs when new logs are added
     LaunchedEffect(logs.size) {
@@ -416,7 +444,12 @@ fun MainScreen(
                             letterSpacing = (-0.5).sp
                         )
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                }
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "by BlazeFTL",
                         style = androidx.compose.ui.text.TextStyle(
@@ -426,12 +459,6 @@ fun MainScreen(
                             letterSpacing = 0.5.sp
                         )
                     )
-                }
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     // Settings Icon Button
                     IconButton(
                         onClick = { showSettingsDialog = true },
@@ -683,7 +710,6 @@ fun MainScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             val currentDir = File(targetPath)
-                            val isValidDirectory = currentDir.exists() && currentDir.isDirectory
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -724,15 +750,6 @@ fun MainScreen(
 
                             // Directory item parsing
                             if (isValidDirectory) {
-                                val childrenDirs = remember(targetPath) {
-                                    try {
-                                        currentDir.listFiles { f -> f.isDirectory }
-                                            ?.sortedBy { it.name.lowercase() } ?: emptyList()
-                                    } catch (e: Exception) {
-                                        emptyList()
-                                    }
-                                }
-
                                 if (childrenDirs.isEmpty()) {
                                     Text(
                                         "No subdirectories in this folder.",
@@ -1259,119 +1276,24 @@ fun MainScreen(
         } // Closes Column
     }
 
-    // --- DIALOGS FOR BOTTOM NAV COMPATIBILITIES ---
-    // Custom Folder History Dialog
-    if (showHistoryDialog) {
-        val uniqueHistory = history.filter { it.isNotBlank() }
-        AlertDialog(
-            onDismissRequest = { showHistoryDialog = false },
-            title = { Text("Folder Selection History", fontWeight = FontWeight.Bold, color = BoldTextPrimary) },
-            text = {
-                if (uniqueHistory.isEmpty()) {
-                    Text("No target paths stored in folder selection history yet.", color = BoldTextSecondary)
-                } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        uniqueHistory.forEach { path ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(BoldSurfaceVar)
-                                    .clickable {
-                                        viewModel.setTargetPath(path)
-                                        showHistoryDialog = false
-                                        Toast.makeText(context, "Loaded folder path from history", Toast.LENGTH_SHORT).show()
-                                    }
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.History, contentDescription = null, tint = BoldPrimary, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = path,
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = BoldTextPrimary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                IconButton(
-                                    onClick = { viewModel.removeHistoryItem(path) },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete historical path log", tint = Color.Red, modifier = Modifier.size(14.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showHistoryDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = BoldPrimary)
-                ) {
-                    Text("Exit", fontWeight = FontWeight.Bold)
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(28.dp)
-        )
-    }
-
-    // WorkManager Auto Scheduler Dialog
-    if (showSchedulerDialog) {
-        AlertDialog(
-            onDismissRequest = { showSchedulerDialog = false },
-            title = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Schedule, contentDescription = null, tint = BoldPrimary)
-                    Text("Auto Cleaner Background Tasks", fontWeight = FontWeight.Bold, color = BoldTextPrimary)
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Folder Untangler integrates WorkManager for safe periodic downloads cleanup.",
-                        fontSize = 13.sp,
-                        color = BoldTextPrimary
-                    )
-                    Text(
-                        text = "• Runs a safe untangle sweep every 24 hours locally-only without internet access.",
-                        fontSize = 12.sp,
-                        color = BoldTextSecondary
-                    )
-                    Text(
-                        text = "• System files are untouched—automatic scans target custom download parameters securely.",
-                        fontSize = 12.sp,
-                        color = BoldTextSecondary
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showSchedulerDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = BoldPrimary)
-                ) {
-                    Text("Got it!", fontWeight = FontWeight.Bold)
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(28.dp)
-        )
-    }
-
     // Branding and adaptive settings Dialog
     if (showSettingsDialog) {
         AlertDialog(
             onDismissRequest = { showSettingsDialog = false },
-            title = { Text("Flattener Settings Options", fontWeight = FontWeight.Bold, color = BoldTextPrimary) },
+            title = {
+                Column {
+                    Text("Flattener Settings Options", fontWeight = FontWeight.Bold, color = BoldTextPrimary)
+                    Text(
+                        text = "by BlazeFTL",
+                        style = androidx.compose.ui.text.TextStyle(
+                            color = BoldTextSecondary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                }
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -1408,94 +1330,6 @@ fun MainScreen(
 
                     HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
 
-                    Text("Quick Access Utilities", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(BoldSurfaceVar)
-                            .clickable {
-                                showSettingsDialog = false
-                                showHistoryDialog = true
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(BoldActivePurple),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.History,
-                                contentDescription = null,
-                                tint = BoldTextAmethyst,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                "Folder History Logs",
-                                fontWeight = FontWeight.Bold,
-                                color = BoldTextPrimary,
-                                fontSize = 13.sp
-                            )
-                            Text(
-                                "View logs of past flattener operations",
-                                color = BoldTextSecondary,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(BoldSurfaceVar)
-                            .clickable {
-                                showSettingsDialog = false
-                                showSchedulerDialog = true
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(BoldActivePurple),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = BoldTextAmethyst,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                "Auto Clean Status",
-                                fontWeight = FontWeight.Bold,
-                                color = BoldTextPrimary,
-                                fontSize = 13.sp
-                            )
-                            Text(
-                                "Check scheduler background tasks",
-                                color = BoldTextSecondary,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
-
                     Text("App Theme Style", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
 
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1523,7 +1357,7 @@ fun MainScreen(
                                                 ThemeStyle.SUNSET_AMBER -> "Amber"
                                                 ThemeStyle.CRIMSON_CHERRY -> "Crimson"
                                                 ThemeStyle.DEEP_SAPPHIRE -> "Sapphire"
-                                                ThemeStyle.MIDNIGHT_ONYX -> "Midnight"
+                                                ThemeStyle.RED_PEACH -> "Peach"
                                             },
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
