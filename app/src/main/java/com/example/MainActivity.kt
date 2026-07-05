@@ -107,6 +107,87 @@ fun MainScreen(
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
+    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
+
+    val BoldPrimary = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF2E6B48)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF6200EE)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0284C7)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFD97706)
+    }
+
+    val BoldBackground = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFF4FBF5)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFFBF8FF)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFF0F9FF)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFFFBEB)
+    }
+
+    val BoldTextPrimary = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF181D19)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF1C0D30)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0C4A6E)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF78350F)
+    }
+
+    val BoldTextSecondary = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF414942)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF564966)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF334155)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF78716C)
+    }
+
+    val BoldSurfaceVar = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFE0EFE3)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFF0E5FC)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFE0F2FE)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
+    }
+
+    val BoldActivePurple = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFC7EED0)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFE4D3FC)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF7DD3FC)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFCD34D)
+    }
+
+    val BoldTextAmethyst = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF0D2517)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF320094)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0369A1)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF92400E)
+    }
+
+    val BoldSoftBlue = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFD2E8DA)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFE8E0FF)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFE0F2FE)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
+    }
+
+    val BoldTextNavy = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF051C0E)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF12003D)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0B3B59)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF451A03)
+    }
+
+    val BoldBorder = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFB1C9B7)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFD8C4F6)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFBAE6FD)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFDE68A)
+    }
+
+    val BoldTerminalBg = BoldBackground
+    val BoldTerminalHighlight = BoldPrimary
+    val BoldTerminalTxt = BoldTextPrimary
+    val BoldTerminalNeon = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF137333)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF8A00FF)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0EA5E9)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFEA580C)
+    }
 
     val terminalListState = rememberLazyListState()
 
@@ -632,7 +713,7 @@ fun MainScreen(
                             if (isValidDirectory) {
                                 val childrenDirs = remember(targetPath) {
                                     try {
-                                        currentDir.listFiles { f -> f.isDirectory && !f.name.startsWith(".") }
+                                        currentDir.listFiles { f -> f.isDirectory }
                                             ?.sortedBy { it.name.lowercase() } ?: emptyList()
                                     } catch (e: Exception) {
                                         emptyList()
@@ -688,28 +769,6 @@ fun MainScreen(
                                     style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFDC2626)),
                                     modifier = Modifier.fillMaxWidth().padding(8.dp)
                                 )
-                                if (targetPath.isNotEmpty()) {
-                                    Button(
-                                        onClick = {
-                                            try {
-                                                val file = File(targetPath)
-                                                if (file.mkdirs()) {
-                                                    viewModel.setTargetPath(targetPath) // refresh list
-                                                    Toast.makeText(context, "Created nested directory successfully!", Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    Toast.makeText(context, "Fail creating directory path.", Toast.LENGTH_SHORT).show()
-                                                }
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "Directories error: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        },
-                                        colors = ButtonDefaults.buttonColors(containerColor = BoldBorder),
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text("Create Target Folder Struct", fontSize = 11.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
                             }
                         }
                     }
@@ -717,87 +776,124 @@ fun MainScreen(
             }
 
             // --- 4. ENGINE SETTINGS & RUN DOCK ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            if (isDryRun) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
+                    shape = RoundedCornerShape(28.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Safe Preview Mode",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextPrimary
-                                )
-                            )
-                            Text(
-                                text = "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files.",
-                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
-                            )
-                        }
-
-                        Switch(
-                            checked = isDryRun,
-                            onCheckedChange = { viewModel.toggleDryRun(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = BoldPrimary,
-                                uncheckedThumbColor = BoldTextSecondary,
-                                uncheckedTrackColor = BoldBorder
-                            )
-                        )
-                    }
-
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
-
-                    // TRIGGER ACTIONS ROW
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Button(
-                            onClick = { showConfirmDialog = true },
-                            enabled = !isRunning && targetPath.isNotEmpty(),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BoldPrimary,
-                                disabledContainerColor = BoldBorder
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(vertical = 12.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (isRunning) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Running Clean...", fontSize = 14.sp)
-                            } else {
-                                Icon(
-                                    imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (isDryRun) "Preview Clean" else "Run Live Clean",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = Color.White
+                                    text = "Safe Preview Mode",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldTextPrimary
+                                    )
+                                )
+                                Text(
+                                    text = "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files.",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
                                 )
                             }
+
+                            Switch(
+                                checked = isDryRun,
+                                onCheckedChange = { viewModel.toggleDryRun(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = BoldPrimary,
+                                    uncheckedThumbColor = BoldTextSecondary,
+                                    uncheckedTrackColor = BoldBorder
+                                )
+                            )
                         }
+
+                        HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
+
+                        // TRIGGER ACTIONS ROW
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = { showConfirmDialog = true },
+                                enabled = !isRunning && targetPath.isNotEmpty(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = BoldPrimary,
+                                    disabledContainerColor = BoldBorder
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(vertical = 12.dp)
+                            ) {
+                                if (isRunning) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Running Clean...", fontSize = 14.sp)
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        tint = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Preview Clean",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    enabled = !isRunning && targetPath.isNotEmpty(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BoldPrimary,
+                        disabledContainerColor = BoldBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    if (isRunning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Running Clean...", fontSize = 14.sp)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Run Live Clean",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
                     }
                 }
             }
@@ -1286,6 +1382,40 @@ fun MainScreen(
 
                     HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
 
+                    Text("App Theme Style", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ThemeStyle.values().forEach { style ->
+                            val isSelected = style == currentTheme
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) BoldPrimary else BoldSurfaceVar)
+                                    .clickable { viewModel.setThemeStyle(style) }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = when (style) {
+                                        ThemeStyle.FOREST_MINT -> "Mint"
+                                        ThemeStyle.ROYAL_AMETHYST -> "Amethyst"
+                                        ThemeStyle.NORDIC_OCEAN -> "Ocean"
+                                        ThemeStyle.SUNSET_AMBER -> "Amber"
+                                    },
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.White else BoldTextPrimary
+                                )
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
+
                     Text(
                         text = "App version: v1.1.0-bold\nTheme: Bold Typography style\nMaterial 3 design layout specifications",
                         fontSize = 11.sp,
@@ -1307,9 +1437,6 @@ fun MainScreen(
         )
     }
 
-    BackHandler(enabled = showInternalFolderPicker) {
-        showInternalFolderPicker = false
-    }
 
     // Full screen folder picker overlay using the entire UI
     AnimatedVisibility(
@@ -1418,6 +1545,20 @@ fun FolderPickerSelectionDialog(
     val context = LocalContext.current
     var currentPath by remember { mutableStateOf(if (initialPath.isNotBlank() && File(initialPath).exists()) initialPath else "/storage/emulated/0") }
     
+    val canGoBack = currentPath != "/storage" && currentPath != "/"
+    androidx.activity.compose.BackHandler(enabled = true) {
+        if (canGoBack) {
+            val parent = File(currentPath).parentFile
+            if (parent != null) {
+                currentPath = parent.absolutePath
+            } else {
+                onDismiss()
+            }
+        } else {
+            onDismiss()
+        }
+    }
+
     val currentDir = File(currentPath)
     val subfolders = remember(currentPath) {
         try {
@@ -1479,7 +1620,7 @@ fun FolderPickerSelectionDialog(
                 
                 list.distinctBy { it.absolutePath }.sortedBy { it.name.lowercase() }
             } else {
-                currentDir.listFiles { file -> file.isDirectory && !file.name.startsWith(".") }
+                currentDir.listFiles { file -> file.isDirectory }
                     ?.sortedBy { it.name.lowercase() } ?: emptyList()
             }
         } catch (e: Exception) {

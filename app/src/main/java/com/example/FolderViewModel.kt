@@ -14,9 +14,30 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+enum class ThemeStyle(val displayName: String) {
+    FOREST_MINT("Forest Mint"),
+    ROYAL_AMETHYST("Royal Amethyst"),
+    NORDIC_OCEAN("Nordic Ocean"),
+    SUNSET_AMBER("Sunset Amber")
+}
+
 class FolderViewModel(application: Application) : AndroidViewModel(application) {
 
     private val sharedPrefs = application.getSharedPreferences("FolderUntanglerPrefs", Context.MODE_PRIVATE)
+
+    private val _currentTheme = MutableStateFlow(
+        try {
+            ThemeStyle.valueOf(sharedPrefs.getString("app_theme_style", ThemeStyle.FOREST_MINT.name) ?: ThemeStyle.FOREST_MINT.name)
+        } catch (e: Exception) {
+            ThemeStyle.FOREST_MINT
+        }
+    )
+    val currentTheme: StateFlow<ThemeStyle> = _currentTheme.asStateFlow()
+
+    fun setThemeStyle(style: ThemeStyle) {
+        _currentTheme.value = style
+        sharedPrefs.edit().putString("app_theme_style", style.name).apply()
+    }
 
     private val _targetPath = MutableStateFlow(
         sharedPrefs.getString("target_path", "/storage/emulated/0/Download") ?: "/storage/emulated/0/Download"
