@@ -12,6 +12,17 @@ For each top-level folder:
 Step 1: It looks inside a folder. If it finds an inner subfolder (like data inside Android), it pulls the contents up into the parent folder and deletes the empty inner folder.
 Step 2: Right after, it checks if that folder now contains only a single file (like File.txt or your newly flattened folders). If it does, it moves that file out to the main directory and deletes the empty parent folder.
 
+```
+Before:
+Folder/A/A_inner/file.txt
+or
+B/only_file.jpg
+
+After:
+Folder/A/file.txt
+only_file.jpg(In Parent Folder)
+```
+
 Hidden files/folders are left untouched.
 <img width="702" height="1560" alt="Screenshot_20260705-145221_Spark Launcher" src="https://github.com/user-attachments/assets/05e490ee-29e6-4239-936e-818dc95fafe7" />
 
