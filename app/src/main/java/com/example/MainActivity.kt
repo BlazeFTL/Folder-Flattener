@@ -713,85 +713,119 @@ fun MainScreen(
             }
 
             // --- 4. ENGINE SETTINGS & RUN DOCK ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            if (isDryRun) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
+                    shape = RoundedCornerShape(28.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isDryRun) "Safe Preview Mode" else "Live Cleaning Mode",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextPrimary
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Safe Preview Mode",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldTextPrimary
+                                    )
+                                )
+                                Text(
+                                    text = "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files.",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                                )
+                            }
+
+                            Switch(
+                                checked = isDryRun,
+                                onCheckedChange = { viewModel.toggleDryRun(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = BoldPrimary,
+                                    uncheckedThumbColor = BoldTextSecondary,
+                                    uncheckedTrackColor = BoldBorder
                                 )
                             )
-                            Text(
-                                text = if (isDryRun) 
-                                    "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files."
-                                else 
-                                    "Directly untangles folders, promoting files and removing empty subfolders from your device storage.",
-                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
-                            )
                         }
 
-                        Switch(
-                            checked = isDryRun,
-                            onCheckedChange = { viewModel.toggleDryRun(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = BoldPrimary,
-                                uncheckedThumbColor = BoldTextSecondary,
-                                uncheckedTrackColor = BoldBorder
-                            )
-                        )
+                        HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
+
+                        // TRIGGER ACTIONS ROW
+                        Button(
+                            onClick = { showConfirmDialog = true },
+                            enabled = !isRunning && targetPath.isNotEmpty(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BoldPrimary,
+                                disabledContainerColor = BoldBorder
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            if (isRunning) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Running Clean...", fontSize = 14.sp)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Preview Clean",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color.White
+                                )
+                            }
+                        }
                     }
-
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
-
-                    // TRIGGER ACTIONS ROW
-                    Button(
-                        onClick = { showConfirmDialog = true },
-                        enabled = !isRunning && targetPath.isNotEmpty(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BoldPrimary,
-                            disabledContainerColor = BoldBorder
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(vertical = 12.dp)
-                    ) {
-                        if (isRunning) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Running Clean...", fontSize = 14.sp)
-                        } else {
-                            Icon(
-                                imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isDryRun) "Preview Clean" else "Run Live Clean",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
-                        }
+                }
+            } else {
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    enabled = !isRunning && targetPath.isNotEmpty(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BoldPrimary,
+                        disabledContainerColor = BoldBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    if (isRunning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Running Clean...", fontSize = 14.sp)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Run Live Clean",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
                     }
                 }
             }
