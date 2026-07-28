@@ -274,12 +274,6 @@ object UntanglerEngine {
             }
         }
 
-        logs.add("-----------------------------------------")
-        logs.add("Summary:")
-        logs.add("• Folders processed: $foldersProcessed")
-        logs.add("• Subfolders unnested: $foldersFlattened")
-        logs.add("• Single files moved up: $filesPromoted")
-        logs.add("• Empty folders deleted: $foldersDeleted")
         logs.add("All tasks successfully parsed!")
 
         return UntangleSummary(

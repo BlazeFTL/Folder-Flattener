@@ -671,7 +671,8 @@ fun MainScreen(
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(24.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.FolderOpen,
@@ -681,7 +682,8 @@ fun MainScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             "Select Folder",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
                         )
                     }
 
@@ -1011,7 +1013,7 @@ fun MainScreen(
                                     imageVector = Icons.Default.ContentCopy,
                                     contentDescription = "Copy logs to clipboard",
                                     tint = BoldPrimary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
 
@@ -1027,7 +1029,7 @@ fun MainScreen(
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "Clear logs list",
                                     tint = BoldPrimary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -1037,7 +1039,7 @@ fun MainScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp)
+                            .height(380.dp)
                             .background(Color.White)
                             .padding(12.dp)
                     ) {
