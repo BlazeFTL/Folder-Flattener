@@ -306,29 +306,43 @@ fun MainScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = if (isDryRun) BoldPrimary else Color(0xFFEF4444)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                color = BoldSurfaceVar,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.CleaningServices,
+                            contentDescription = null,
+                            tint = BoldPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Text(
                         text = if (isDryRun) "Confirm Safe Preview" else "Confirm Folder Flattening",
                         fontWeight = FontWeight.Bold,
-                        color = BoldTextPrimary
+                        color = BoldTextPrimary,
+                        fontSize = 18.sp
                     )
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = "You are about to scan and untangle:",
-                        color = BoldTextSecondary
+                        color = BoldTextSecondary,
+                        fontSize = 13.sp
                     )
                     
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(BoldSurfaceVar, RoundedCornerShape(12.dp))
+                            .border(1.dp, BoldBorder, RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
                         Text(
@@ -340,8 +354,6 @@ fun MainScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     if (isDryRun) {
                         Text(
                             text = "⏩ Safe Preview Mode is active. The engine will inspect files and show results safely in the log panel. Your actual files will not be touched or changed.",
@@ -350,15 +362,40 @@ fun MainScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                     } else {
-                        Text(
-                            text = "⚠ WARNING: Live Mode is active! This operation modifies files physically:\n" +
-                                   "• Files in subfolders are promoted up into parent folder.\n" +
-                                   "• Name conflicts are resolved automatically by adding custom numbering.\n" +
-                                   "• Redundant empty containers are deleted permanently.",
-                            fontSize = 12.sp,
-                            color = Color(0xFFB91C1C),
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(BoldSurfaceVar.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                                .border(1.dp, BoldBorder, RoundedCornerShape(14.dp))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = BoldPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Live Mode Operations:",
+                                    fontSize = 12.sp,
+                                    color = BoldTextPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = "• Files in subfolders are promoted into parent folder.\n" +
+                                       "• Name conflicts are resolved automatically with custom numbering.\n" +
+                                       "• Redundant empty containers are deleted permanently.",
+                                fontSize = 11.sp,
+                                color = BoldTextSecondary,
+                                lineHeight = 16.sp
+                            )
+                        }
                     }
                 }
             },
@@ -369,10 +406,16 @@ fun MainScreen(
                         viewModel.runUntangler()
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDryRun) BoldPrimary else Color(0xFFEF4444)
+                        containerColor = BoldPrimary
                     ),
                     shape = RoundedCornerShape(24.dp)
                 ) {
+                    Icon(
+                        imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (isDryRun) "Safe Preview" else "Clean Live",
                         fontWeight = FontWeight.Bold,
@@ -672,7 +715,9 @@ fun MainScreen(
             // --- 4. ENGINE SETTINGS & RUN DOCK ---
             if (isDryRun) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
                     colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
                     shape = RoundedCornerShape(28.dp)
                 ) {
@@ -764,7 +809,9 @@ fun MainScreen(
                         containerColor = BoldPrimary,
                         disabledContainerColor = BoldBorder
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
                     if (isRunning) {
@@ -902,8 +949,8 @@ fun MainScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(2.dp, BoldActivePurple, RoundedCornerShape(24.dp)),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFCF8FF)),
+                    .border(1.5.dp, BoldBorder, RoundedCornerShape(24.dp)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Column {
@@ -911,8 +958,8 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF3EDF7))
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .background(BoldSurfaceVar)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -988,7 +1035,7 @@ fun MainScreen(
                                 Icon(
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "Clear logs list",
-                                    tint = Color(0xFFBA1A1A),
+                                    tint = BoldPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -999,7 +1046,11 @@ fun MainScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp)
+                            .heightIn(
+                                min = 220.dp,
+                                max = if (logs.isNotEmpty()) 520.dp else 220.dp
+                            )
+                            .animateContentSize()
                             .background(Color.White)
                             .padding(12.dp)
                     ) {
