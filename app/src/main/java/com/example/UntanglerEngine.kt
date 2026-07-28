@@ -97,7 +97,6 @@ object UntanglerEngine {
 
         for (d in dList) {
             foldersProcessed++
-            logs.add("Inspecting folder: ${d.name}")
 
             // Check if directory can be read/written
             if (!d.canRead()) {

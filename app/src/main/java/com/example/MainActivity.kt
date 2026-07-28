@@ -729,14 +729,17 @@ fun MainScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Safe Preview Mode",
+                                text = if (isDryRun) "Safe Preview Mode" else "Live Cleaning Mode",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = BoldTextPrimary
                                 )
                             )
                             Text(
-                                text = "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files.",
+                                text = if (isDryRun) 
+                                    "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files."
+                                else 
+                                    "Directly untangles folders, promoting files and removing empty subfolders from your device storage.",
                                 style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
                             )
                         }
