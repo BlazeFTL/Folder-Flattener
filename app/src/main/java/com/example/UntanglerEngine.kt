@@ -133,7 +133,7 @@ object UntanglerEngine {
                                 sourcePath = item.absolutePath,
                                 destPath = destination.absolutePath,
                                 folderName = d.name,
-                                description = "Flatten '${firstNestedDir.name}/${item.name}' into parent folder '${d.name}/'"
+                                description = "Unnest '${firstNestedDir.name}/${item.name}' into parent folder '${d.name}/'"
                             )
                         )
 
@@ -145,7 +145,7 @@ object UntanglerEngine {
                                 }
                                 val uniqueDest = findUniqueFile(d, item.name)
                                 if (item.renameTo(uniqueDest)) {
-                                    logs.add("  ✔ Successfully flattened subfolder element: ${item.name} -> ${uniqueDest.name}")
+                                    logs.add("  ✔ Successfully unnested subfolder element: ${item.name} -> ${uniqueDest.name}")
                                 } else {
                                     logs.add("  ❌ Failed to move Nested Element: ${item.name} (File rename failed)")
                                 }
@@ -201,19 +201,19 @@ object UntanglerEngine {
                             sourcePath = singleItem.absolutePath,
                             destPath = finalDest.absolutePath,
                             folderName = d.name,
-                            description = "Promote lone file '${singleItem.name}' to root folder '${rootDir.name}/'"
+                            description = "Move single file '${singleItem.name}' up to root folder '${rootDir.name}/'"
                         )
                     )
 
                     if (!isDryRun) {
                         try {
                             if (!singleItem.canRead() || !rootDir.canWrite()) {
-                                logs.add("  ❌ Failed to promote file '${singleItem.name}' due to permissions")
+                                logs.add("  ❌ Failed to move file '${singleItem.name}' due to permissions")
                                 continue
                             }
                             val uniqueDest = findUniqueFile(rootDir, singleItem.name)
                             if (singleItem.renameTo(uniqueDest)) {
-                                logs.add("  ✨ Successfully promoted single file: ${singleItem.name} up to root directory")
+                                logs.add("  ✨ Successfully moved single file: ${singleItem.name} up to root directory")
                                 
                                 // Delete the empty outer directory d
                                 actions.add(
@@ -261,7 +261,7 @@ object UntanglerEngine {
                 if (!isDryRun) {
                     try {
                         if (d.delete()) {
-                            logs.add("  🗑 Cleaned up vacant empty folder '${d.name}'")
+                            logs.add("  🗑 Deleted empty folder '${d.name}'")
                             foldersDeleted++
                         } else {
                             logs.add("  ⚠ Could not delete empty folder '${d.name}'")
@@ -278,9 +278,9 @@ object UntanglerEngine {
         logs.add("-----------------------------------------")
         logs.add("Summary:")
         logs.add("• Folders processed: $foldersProcessed")
-        logs.add("• Subfolders flattened: $foldersFlattened")
-        logs.add("• Single files promoted: $filesPromoted")
-        logs.add("• Parent folders cleared: $foldersDeleted")
+        logs.add("• Subfolders unnested: $foldersFlattened")
+        logs.add("• Single files moved up: $filesPromoted")
+        logs.add("• Empty folders deleted: $foldersDeleted")
         logs.add("All tasks successfully parsed!")
 
         return UntangleSummary(

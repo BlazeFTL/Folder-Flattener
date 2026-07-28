@@ -586,34 +586,39 @@ fun MainScreen(
                         }
                     }
 
-                    // Text Field for precise inputs
-                    OutlinedTextField(
-                        value = targetPath,
-                        onValueChange = { viewModel.setTargetPath(it) },
-                        label = { Text("Enter Target Folder Path") },
-                        textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = BoldTextPrimary,
-                            unfocusedTextColor = BoldTextPrimary,
-                            focusedBorderColor = BoldPrimary,
-                            unfocusedBorderColor = BoldBorder,
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        ),
-                        trailingIcon = {
-                            if (targetPath.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.setTargetPath("") }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Clear,
-                                        contentDescription = "Clear manually entered path text input",
-                                        tint = BoldTextSecondary
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Folder Path selector (Clicking opens folder picker directly without keyboard)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { showInternalFolderPicker = true }
+                    ) {
+                        OutlinedTextField(
+                            value = targetPath,
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            label = { Text("Target Folder Path") },
+                            textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = BoldTextPrimary,
+                                disabledBorderColor = BoldBorder,
+                                disabledContainerColor = Color.White,
+                                disabledLabelColor = BoldTextSecondary,
+                                disabledLeadingIconColor = BoldPrimary,
+                                disabledTrailingIconColor = BoldTextSecondary
+                            ),
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = "Select Folder",
+                                    tint = BoldPrimary
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                     // Pick from device folder
                     Button(
@@ -632,7 +637,7 @@ fun MainScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Select Any Folder (Recommended)",
+                            "Select Folder",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -659,142 +664,6 @@ fun MainScreen(
                                 "Use System Storage Picker (External/SD)",
                                 fontWeight = FontWeight.Bold
                             )
-                        }
-                    }
-
-
-
-                    // COLLAPSIBLE BROWSER BAR
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { showBrowser = !showBrowser }
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = if (showBrowser) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Expand child file list navigator and explorer folders",
-                            tint = BoldPrimary
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (showBrowser) "Hide Explorer" else "Show Explorer",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = BoldPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-
-                    AnimatedVisibility(
-                        visible = showBrowser,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White, RoundedCornerShape(16.dp))
-                                .border(1.dp, BoldBorder, RoundedCornerShape(16.dp))
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val currentDir = File(targetPath)
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = if (isValidDirectory) "Inside: ${currentDir.name.ifEmpty { "Root" }}" else "Directory invalid",
-                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextPrimary, fontWeight = FontWeight.Bold),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                if (isValidDirectory && currentDir.parentFile != null) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .clickable {
-                                                currentDir.parentFile?.absolutePath?.let { parentPath ->
-                                                    viewModel.setTargetPath(parentPath)
-                                                }
-                                            }
-                                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowBack,
-                                            contentDescription = "Navigate to previous parent folder directory",
-                                            tint = BoldPrimary,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Text("Parent Dir", fontSize = 11.sp, color = BoldPrimary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-
-                            // Directory item parsing
-                            if (isValidDirectory) {
-                                if (childrenDirs.isEmpty()) {
-                                    Text(
-                                        "No subdirectories in this folder.",
-                                        style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary, textAlign = TextAlign.Center),
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
-                                    )
-                                } else {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier
-                                            .heightIn(max = 160.dp)
-                                            .verticalScroll(rememberScrollState())
-                                    ) {
-                                        childrenDirs.forEach { dir ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .clickable {
-                                                        viewModel.setTargetPath(dir.absolutePath)
-                                                    }
-                                                    .padding(vertical = 6.dp, horizontal = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Folder,
-                                                    contentDescription = null,
-                                                    tint = BoldPrimary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Text(
-                                                    text = dir.name,
-                                                    fontSize = 13.sp,
-                                                    color = BoldTextPrimary,
-                                                    fontWeight = FontWeight.Medium,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                Text(
-                                    "Provide or navigate to a valid directory to explore subdirectories.",
-                                    style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFDC2626)),
-                                    modifier = Modifier.fillMaxWidth().padding(8.dp)
-                                )
-                            }
                         }
                     }
                 }
@@ -935,7 +804,7 @@ fun MainScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (isDryRun) "Projected Clean-up Actions" else "Completed Live Actions",
+                            text = "Results",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = BoldTextPrimary
@@ -964,14 +833,14 @@ fun MainScreen(
                                     )
                                 }
 
-                                // Flattened Card
+                                // Unnested Card
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
                                         .background(BoldSoftBlue, RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("FLATTENED", fontSize = 10.sp, color = BoldTextNavy, fontWeight = FontWeight.Bold)
+                                    Text("UNNESTED", fontSize = 10.sp, color = BoldTextNavy, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.foldersFlattened.toString(),
@@ -985,14 +854,14 @@ fun MainScreen(
                             }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                // Promoted Card
+                                // Files Moved Up Card
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
                                         .background(Color(0xFFE8DEF8), RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("PROMOTED", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
+                                    Text("FILES MOVED UP", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.filesPromoted.toString(),
@@ -1004,7 +873,7 @@ fun MainScreen(
                                     )
                                 }
 
-                                // Recycled Card
+                                // Folders Deleted Card
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
@@ -1012,7 +881,7 @@ fun MainScreen(
                                         .border(1.dp, BoldBorder, RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("RECYCLED", fontSize = 10.sp, color = BoldTextSecondary, fontWeight = FontWeight.Bold)
+                                    Text("FOLDERS DELETED", fontSize = 10.sp, color = BoldTextSecondary, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.foldersDeleted.toString(),
@@ -1022,61 +891,6 @@ fun MainScreen(
                                             fontSize = 24.sp
                                         )
                                     )
-                                }
-                            }
-                        }
-
-                        if (sum.actions.isEmpty()) {
-                            Text(
-                                text = "✨ Folder is fully optimized! No flattening or promotion candidates found.",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color(0xFF047857),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        } else {
-                            Text(
-                                text = if (isDryRun) "Suggested Actions (${sum.actions.size}):" else "Completed Actions (${sum.actions.size}):",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextSecondary
-                                )
-                            )
-
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier
-                                    .heightIn(max = 140.dp)
-                                    .verticalScroll(rememberScrollState())
-                            ) {
-                                sum.actions.forEach { action ->
-                                    val iconColor = when (action.type) {
-                                        ActionType.FLATTEN_SUBFOLDER -> BoldPrimary
-                                        ActionType.PROMOTE_SINGLE_FILE -> Color(0xFF10B981)
-                                        ActionType.DELETE_EMPTY_FOLDER -> Color(0xFFEF4444)
-                                        else -> Color.Gray
-                                    }
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Color.White, RoundedCornerShape(12.dp))
-                                            .border(1.dp, BoldBorder, RoundedCornerShape(12.dp))
-                                            .padding(10.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .background(iconColor, CircleShape)
-                                        )
-                                        Text(
-                                            text = action.description,
-                                            fontSize = 11.sp,
-                                            color = BoldTextPrimary,
-                                            lineHeight = 14.sp
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -1113,7 +927,7 @@ fun MainScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "Operation Logs",
+                                text = "Logs",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     color = BoldTextPrimary,
                                     fontWeight = FontWeight.Bold
