@@ -31,7 +31,10 @@ jobs:
             isShrinkResources = true\
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")' app/build.gradle.kts
           sed -i '/signingConfig = signingConfigs.getByName("debugConfig")/d' app/build.gradle.kts
-
+     
+      - name: Ensure proguard-rules.pro exists
+        run: touch app/proguard-rules.pro
+        
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace
 
