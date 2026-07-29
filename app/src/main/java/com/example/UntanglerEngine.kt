@@ -47,6 +47,33 @@ object UntanglerEngine {
         return candidate
     }
 
+    private fun getAllFilesRecursively(dir: File): List<File> {
+        val result = mutableListOf<File>()
+        val files = dir.listFiles() ?: return result
+        for (f in files) {
+            if (f.name.startsWith(".")) continue
+            if (f.isDirectory) {
+                result.addAll(getAllFilesRecursively(f))
+            } else if (f.isFile) {
+                result.add(f)
+            }
+        }
+        return result
+    }
+
+    private fun getSubdirectoriesBottomUp(dir: File): List<File> {
+        val result = mutableListOf<File>()
+        val files = dir.listFiles() ?: return result
+        for (f in files) {
+            if (f.name.startsWith(".")) continue
+            if (f.isDirectory) {
+                result.addAll(getSubdirectoriesBottomUp(f))
+                result.add(f)
+            }
+        }
+        return result
+    }
+
     /**
      * Recursively computes the action list or executes them.
      */
@@ -98,156 +125,166 @@ object UntanglerEngine {
         for (d in dList) {
             foldersProcessed++
 
-            // Check if directory can be read/written
+            // Check if directory can be read
             if (!d.canRead()) {
                 logs.add("  ❌ Failed to inspect '${d.name}': Permission denied (Unreadable)")
                 continue
             }
 
-            // 1. Identify if d has direct subdirectories (not hidden)
-            val nestedDirs = try {
+            // 1. Identify direct subdirectories inside d (ignoring hidden)
+            val directSubDirs = try {
                 d.listFiles { file -> file.isDirectory && !file.name.startsWith(".") } ?: emptyArray()
             } catch (e: Exception) {
-                logs.add("  ❌ Failed to read nested folders inside '${d.name}': Permission denied")
                 emptyArray()
             }
 
-            val firstNestedDir = nestedDirs.firstOrNull()
-
-            if (firstNestedDir != null) {
-                logs.add("ℹ Found subfolder inside custom folder: ${d.name}/${firstNestedDir.name}")
-                val nestedContents = try {
-                    firstNestedDir.listFiles() ?: emptyArray()
-                } catch (e: Exception) {
-                    logs.add("  ❌ Failed to retrieve subfolder contents of '${firstNestedDir.name}': Access denied")
-                    emptyArray()
-                }
-                
-                if (nestedContents.isNotEmpty()) {
-                    for (item in nestedContents) {
-                        val destination = File(d, item.name)
-                        actions.add(
-                            UntangleAction(
-                                type = ActionType.FLATTEN_SUBFOLDER,
-                                sourcePath = item.absolutePath,
-                                destPath = destination.absolutePath,
-                                folderName = d.name,
-                                description = "Unnest '${firstNestedDir.name}/${item.name}' into parent folder '${d.name}/'"
-                            )
-                        )
-
-                        if (!isDryRun) {
-                            try {
-                                if (!item.canRead() || !d.canWrite()) {
-                                    logs.add("  ❌ Failed to move Nested Element '${item.name}' due to permissions")
-                                    continue
-                                }
-                                val uniqueDest = findUniqueFile(d, item.name)
-                                if (item.renameTo(uniqueDest)) {
-                                    logs.add("  ✔ Successfully unnested subfolder element: ${item.name} -> ${uniqueDest.name}")
-                                } else {
-                                    logs.add("  ❌ Failed to move Nested Element: ${item.name} (File rename failed)")
-                                }
-                            } catch (e: Exception) {
-                                logs.add("  ❌ Error moving Nested Element '${item.name}': ${e.localizedMessage}")
-                            }
-                        }
-                    }
+            if (directSubDirs.isNotEmpty()) {
+                // Collect all files inside subfolders at any depth
+                val subfolderFiles = mutableListOf<File>()
+                for (subDir in directSubDirs) {
+                    subfolderFiles.addAll(getAllFilesRecursively(subDir))
                 }
 
-                // Delete the subfolder
-                actions.add(
-                    UntangleAction(
-                        type = ActionType.DELETE_EMPTY_FOLDER,
-                        sourcePath = firstNestedDir.absolutePath,
-                        destPath = "",
-                        folderName = d.name,
-                        description = "Delete empty subfolder: ${d.name}/${firstNestedDir.name}"
-                    )
-                )
-
-                if (!isDryRun) {
-                    try {
-                        if (firstNestedDir.delete()) {
-                            logs.add("  🗑 Deleted empty subfolder '${firstNestedDir.name}'")
-                            foldersFlattened++
-                        } else {
-                            logs.add("  ⚠ Could not delete subfolder '${firstNestedDir.name}' (might not be empty or locked)")
-                        }
-                    } catch (e: Exception) {
-                        logs.add("  ⚠ Error deleting subfolder '${firstNestedDir.name}': ${e.localizedMessage}")
-                    }
-                } else {
-                    foldersFlattened++
-                }
-            }
-
-            // 2. Refresh contents check: Is there exactly one regular file and nothing else?
-            val currentContents = try {
-                d.listFiles() ?: emptyArray()
-            } catch (e: Exception) {
-                emptyArray()
-            }
-            val activeContents = currentContents.filter { !it.name.startsWith(".") }
-
-            if (activeContents.size == 1) {
-                val singleItem = activeContents[0]
-                if (singleItem.isFile) {
-                    val finalDest = File(rootDir, singleItem.name)
+                // Unnest all subfolder files up into d
+                for (fileItem in subfolderFiles) {
+                    val destination = File(d, fileItem.name)
                     actions.add(
                         UntangleAction(
-                            type = ActionType.PROMOTE_SINGLE_FILE,
-                            sourcePath = singleItem.absolutePath,
-                            destPath = finalDest.absolutePath,
+                            type = ActionType.FLATTEN_SUBFOLDER,
+                            sourcePath = fileItem.absolutePath,
+                            destPath = destination.absolutePath,
                             folderName = d.name,
-                            description = "Move single file '${singleItem.name}' up to root folder '${rootDir.name}/'"
+                            description = "Unnest '${fileItem.name}' into parent folder '${d.name}/'"
                         )
                     )
 
                     if (!isDryRun) {
                         try {
-                            if (!singleItem.canRead() || !rootDir.canWrite()) {
-                                logs.add("  ❌ Failed to move file '${singleItem.name}' due to permissions")
+                            if (!fileItem.canRead() || !d.canWrite()) {
+                                logs.add("  ❌ Failed to move '${fileItem.name}': Access denied")
                                 continue
                             }
-                            val uniqueDest = findUniqueFile(rootDir, singleItem.name)
-                            if (singleItem.renameTo(uniqueDest)) {
-                                logs.add("  ✨ Successfully moved single file: ${singleItem.name} up to root directory")
-                                
-                                // Delete the empty outer directory d
-                                actions.add(
-                                    UntangleAction(
-                                        type = ActionType.DELETE_EMPTY_FOLDER,
-                                        sourcePath = d.absolutePath,
-                                        destPath = "",
-                                        folderName = d.name,
-                                        description = "Delete empty container directory: ${d.name}"
-                                    )
-                                )
-                                try {
-                                    if (d.delete()) {
-                                        logs.add("  🗑 Deleted empty parent container '${d.name}'")
-                                        foldersDeleted++
-                                    } else {
-                                        logs.add("  ⚠ Could not delete empty parent container '${d.name}'")
-                                    }
-                                } catch (ex: Exception) {
-                                    logs.add("  ⚠ Error deleting parent container '${d.name}': ${ex.localizedMessage}")
-                                }
-                                filesPromoted++
+                            val uniqueDest = findUniqueFile(d, fileItem.name)
+                            if (fileItem.renameTo(uniqueDest)) {
+                                logs.add("  ✔ Successfully unnested subfolder file: ${fileItem.name} into ${d.name}")
                             } else {
-                                logs.add("  ❌ Failed to promote file '${singleItem.name}' (File rename returned false)")
+                                logs.add("  ❌ Failed to move '${fileItem.name}': Rename failed")
                             }
                         } catch (e: Exception) {
-                            logs.add("  ❌ Error promoting file '${singleItem.name}': ${e.localizedMessage}")
+                            logs.add("  ❌ Error moving '${fileItem.name}': ${e.localizedMessage}")
                         }
-                    } else {
-                        filesPromoted++
-                        foldersDeleted++
                     }
                 }
-            } else if (activeContents.isEmpty()) {
-                // Folder is empty, notify deletion
+
+                // Delete all empty subfolders bottom-up
+                val subDirsBottomUp = mutableListOf<File>()
+                for (subDir in directSubDirs) {
+                    subDirsBottomUp.addAll(getSubdirectoriesBottomUp(subDir))
+                    subDirsBottomUp.add(subDir)
+                }
+
+                for (subDir in subDirsBottomUp) {
+                    actions.add(
+                        UntangleAction(
+                            type = ActionType.DELETE_EMPTY_FOLDER,
+                            sourcePath = subDir.absolutePath,
+                            destPath = "",
+                            folderName = d.name,
+                            description = "Delete empty subfolder: ${subDir.name}"
+                        )
+                    )
+
+                    if (!isDryRun) {
+                        try {
+                            if (subDir.delete()) {
+                                logs.add("  🗑 Deleted empty subfolder '${subDir.name}'")
+                                foldersFlattened++
+                            } else {
+                                logs.add("  ⚠ Could not delete subfolder '${subDir.name}'")
+                            }
+                        } catch (e: Exception) {
+                            logs.add("  ⚠ Error deleting subfolder '${subDir.name}': ${e.localizedMessage}")
+                        }
+                    } else {
+                        foldersFlattened++
+                    }
+                }
+            }
+
+            // 2. Check d's contents after unnesting subfolders
+            val currentContents: List<File> = if (!isDryRun) {
+                try {
+                    d.listFiles()?.filter { !it.name.startsWith(".") } ?: emptyList()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else {
+                val directFiles = try {
+                    d.listFiles()?.filter { !it.name.startsWith(".") && it.isFile } ?: emptyList()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                val subFiles = mutableListOf<File>()
+                for (subDir in directSubDirs) {
+                    subFiles.addAll(getAllFilesRecursively(subDir))
+                }
+                directFiles + subFiles
+            }
+
+            if (currentContents.size == 1 && currentContents[0].isFile) {
+                val singleItem = currentContents[0]
+                val finalDest = File(rootDir, singleItem.name)
+                actions.add(
+                    UntangleAction(
+                        type = ActionType.PROMOTE_SINGLE_FILE,
+                        sourcePath = singleItem.absolutePath,
+                        destPath = finalDest.absolutePath,
+                        folderName = d.name,
+                        description = "Move single file '${singleItem.name}' up to root folder '${rootDir.name}/'"
+                    )
+                )
+
+                if (!isDryRun) {
+                    try {
+                        if (!singleItem.canRead() || !rootDir.canWrite()) {
+                            logs.add("  ❌ Failed to move file '${singleItem.name}': Access denied")
+                            continue
+                        }
+                        val uniqueDest = findUniqueFile(rootDir, singleItem.name)
+                        if (singleItem.renameTo(uniqueDest)) {
+                            logs.add("  ✨ Successfully moved single file: ${singleItem.name} up to root directory")
+
+                            actions.add(
+                                UntangleAction(
+                                    type = ActionType.DELETE_EMPTY_FOLDER,
+                                    sourcePath = d.absolutePath,
+                                    destPath = "",
+                                    folderName = d.name,
+                                    description = "Delete empty container directory: ${d.name}"
+                                )
+                            )
+                            try {
+                                if (d.delete()) {
+                                    logs.add("  🗑 Deleted empty parent container '${d.name}'")
+                                    foldersDeleted++
+                                } else {
+                                    logs.add("  ⚠ Could not delete empty parent container '${d.name}'")
+                                }
+                            } catch (ex: Exception) {
+                                logs.add("  ⚠ Error deleting parent container '${d.name}': ${ex.localizedMessage}")
+                            }
+                            filesPromoted++
+                        } else {
+                            logs.add("  ❌ Failed to promote file '${singleItem.name}'")
+                        }
+                    } catch (e: Exception) {
+                        logs.add("  ❌ Error promoting file '${singleItem.name}': ${e.localizedMessage}")
+                    }
+                } else {
+                    filesPromoted++
+                    foldersDeleted++
+                }
+            } else if (currentContents.isEmpty()) {
                 actions.add(
                     UntangleAction(
                         type = ActionType.DELETE_EMPTY_FOLDER,
