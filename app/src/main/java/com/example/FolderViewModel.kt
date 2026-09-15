@@ -24,6 +24,13 @@ enum class ThemeStyle(val displayName: String) {
     RED_PEACH("Red Peach")
 }
 
+data class ProcessingProgress(
+    val current: Int,
+    val total: Int,
+    val currentFolder: String,
+    val percentage: Float = if (total > 0) current.toFloat() / total.toFloat() else 0f
+)
+
 class FolderViewModel(application: Application) : AndroidViewModel(application) {
 
     private val sharedPrefs = application.getSharedPreferences("FolderUntanglerPrefs", Context.MODE_PRIVATE)
@@ -62,6 +69,9 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
+
+    private val _progress = MutableStateFlow<ProcessingProgress?>(null)
+    val progress: StateFlow<ProcessingProgress?> = _progress.asStateFlow()
 
     private val _logs = MutableStateFlow<List<String>>(emptyList())
     val logs: StateFlow<List<String>> = _logs.asStateFlow()
@@ -137,6 +147,7 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
     fun runUntangler() {
         if (_isRunning.value) return
         _isRunning.value = true
+        _progress.value = null
 
         viewModelScope.launch {
             val path = _targetPath.value
@@ -147,12 +158,22 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
             _summary.value = null
 
             val result = withContext(Dispatchers.IO) {
-                UntanglerEngine.process(path, dryRun)
+                UntanglerEngine.process(
+                    targetPath = path,
+                    isDryRun = dryRun,
+                    onProgress = { current, total, folderName ->
+                        _progress.value = ProcessingProgress(current, total, folderName)
+                    },
+                    onLog = { newLog ->
+                        _logs.value = _logs.value + newLog
+                    }
+                )
             }
 
             _logs.value = result.logs
             _actions.value = result.actions
             _summary.value = result
+            _progress.value = null
             _isRunning.value = false
         }
     }
@@ -161,5 +182,6 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
         _logs.value = emptyList()
         _actions.value = emptyList()
         _summary.value = null
+        _progress.value = null
     }
 }

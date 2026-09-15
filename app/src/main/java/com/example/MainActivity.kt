@@ -103,6 +103,7 @@ fun MainScreen(
     val isDryRun by viewModel.isDryRun.collectAsStateWithLifecycle()
     val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
     val isRunning by viewModel.isRunning.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
     val logs by viewModel.logs.collectAsStateWithLifecycle()
     val actions by viewModel.actions.collectAsStateWithLifecycle()
     val summary by viewModel.summary.collectAsStateWithLifecycle()
@@ -715,119 +716,155 @@ fun MainScreen(
             }
 
             // --- 4. ENGINE SETTINGS & RUN DOCK ---
-            if (isDryRun) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
-                    shape = RoundedCornerShape(28.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = BoldSurfaceVar),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text(
+                                text = "Safe Preview Mode",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = BoldTextPrimary
+                                )
+                            )
+                            Text(
+                                text = if (isDryRun) {
+                                    "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files."
+                                } else {
+                                    "Live Clean Mode active — redundant files will be moved up and empty subfolders will be removed permanently."
+                                },
+                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                            )
+                        }
+
+                        Switch(
+                            checked = isDryRun,
+                            onCheckedChange = { viewModel.toggleDryRun(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = BoldPrimary,
+                                uncheckedThumbColor = BoldTextSecondary,
+                                uncheckedTrackColor = BoldBorder
+                            )
+                        )
+                    }
+
+                    // Real-time progress display during run
+                    if (isRunning && progress != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White, RoundedCornerShape(16.dp))
+                                .border(1.dp, BoldBorder.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "Safe Preview Mode",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                    text = "Processing ${progress!!.current} of ${progress!!.total} folders",
+                                    style = MaterialTheme.typography.bodySmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = BoldTextPrimary
                                     )
                                 )
                                 Text(
-                                    text = "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files.",
-                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                                    text = "${(progress!!.percentage * 100).toInt()}%",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldPrimary
+                                    )
                                 )
                             }
-
-                            Switch(
-                                checked = isDryRun,
-                                onCheckedChange = { viewModel.toggleDryRun(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = BoldPrimary,
-                                    uncheckedThumbColor = BoldTextSecondary,
-                                    uncheckedTrackColor = BoldBorder
-                                )
+                            LinearProgressIndicator(
+                                progress = { progress!!.percentage },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
+                                color = BoldPrimary,
+                                trackColor = BoldBorder.copy(alpha = 0.4f)
                             )
-                        }
-
-                        HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
-
-                        // TRIGGER ACTIONS ROW
-                        Button(
-                            onClick = { showConfirmDialog = true },
-                            enabled = !isRunning && targetPath.isNotEmpty(),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BoldPrimary,
-                                disabledContainerColor = BoldBorder
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(vertical = 12.dp)
-                        ) {
-                            if (isRunning) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Running Clean...", fontSize = 14.sp)
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Preview Clean",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = Color.White
-                                )
+                            if (progress!!.currentFolder.isNotBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Folder,
+                                        contentDescription = null,
+                                        tint = BoldPrimary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        text = progress!!.currentFolder,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = BoldTextSecondary,
+                                            fontFamily = FontFamily.Monospace
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            } else {
-                Button(
-                    onClick = { showConfirmDialog = true },
-                    enabled = !isRunning && targetPath.isNotEmpty(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BoldPrimary,
-                        disabledContainerColor = BoldBorder
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(vertical = 12.dp)
-                ) {
-                    if (isRunning) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Running Clean...", fontSize = 14.sp)
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Run Live Clean",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
+
+                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
+
+                    // TRIGGER ACTIONS ROW
+                    Button(
+                        onClick = { showConfirmDialog = true },
+                        enabled = !isRunning && targetPath.isNotEmpty(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BoldPrimary,
+                            disabledContainerColor = BoldBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        if (isRunning) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            val runningText = if (progress != null && progress!!.total > 0) {
+                                "Cleaning (${progress!!.current}/${progress!!.total})..."
+                            } else {
+                                "Running Clean..."
+                            }
+                            Text(runningText, fontSize = 14.sp)
+                        } else {
+                            Icon(
+                                imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isDryRun) "Preview Clean" else "Run Live Clean",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -1125,124 +1162,15 @@ fun MainScreen(
         } // Closes Column
     }
 
-    // Branding and adaptive settings Dialog
-    if (showSettingsDialog) {
-        AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = {
-                Column {
-                    Text("Flattener Settings Options", fontWeight = FontWeight.Bold, color = BoldTextPrimary)
-                    Text(
-                        text = "By BlazeFTL",
-                        style = androidx.compose.ui.text.TextStyle(
-                            color = BoldTextSecondary,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp,
-                            letterSpacing = 0.5.sp
-                        )
-                    )
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "Customize the operations behavior of the flattener utility below:",
-                        fontSize = 13.sp,
-                        color = BoldTextSecondary
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Enforce Safe Preview Mode", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
-                        Switch(
-                            checked = isDryRun,
-                            onCheckedChange = { viewModel.toggleDryRun(it) },
-                            colors = SwitchDefaults.colors(checkedTrackColor = BoldPrimary)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Show System Storage Picker", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
-                        Switch(
-                            checked = showSystemPicker,
-                            onCheckedChange = { viewModel.toggleSystemPicker(it) },
-                            colors = SwitchDefaults.colors(checkedTrackColor = BoldPrimary)
-                        )
-                    }
-
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
-
-                    Text("App Theme Style", fontSize = 13.sp, color = BoldTextPrimary, fontWeight = FontWeight.Bold)
-
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ThemeStyle.values().toList().chunked(3).forEach { rowStyles ->
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                rowStyles.forEach { style ->
-                                    val isSelected = style == currentTheme
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isSelected) BoldPrimary else BoldSurfaceVar)
-                                            .clickable { viewModel.setThemeStyle(style) }
-                                            .padding(vertical = 8.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = when (style) {
-                                                ThemeStyle.FOREST_MINT -> "Mint"
-                                                ThemeStyle.ROYAL_AMETHYST -> "Amethyst"
-                                                ThemeStyle.NORDIC_OCEAN -> "Ocean"
-                                                ThemeStyle.SUNSET_AMBER -> "Amber"
-                                                ThemeStyle.CRIMSON_CHERRY -> "Crimson"
-                                                ThemeStyle.DEEP_SAPPHIRE -> "Sapphire"
-                                                ThemeStyle.RED_PEACH -> "Peach"
-                                            },
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isSelected) Color.White else BoldTextPrimary
-                                        )
-                                    }
-                                }
-                                if (rowStyles.size < 3) {
-                                    repeat(3 - rowStyles.size) {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.5f))
-
-                    Text(
-                        text = "App version: v1.1.0-bold\nTheme: Bold Typography style\nMaterial 3 design layout specifications",
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = BoldTextSecondary
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showSettingsDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = BoldPrimary)
-                ) {
-                    Text("Close", fontWeight = FontWeight.Bold)
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(28.dp)
+    // Full screen settings overlay
+    AnimatedVisibility(
+        visible = showSettingsDialog,
+        enter = fadeIn() + slideInVertically { it },
+        exit = fadeOut() + slideOutVertically { it }
+    ) {
+        SettingsFullScreen(
+            viewModel = viewModel,
+            onDismiss = { showSettingsDialog = false }
         )
     }
 
@@ -1745,5 +1673,364 @@ fun FolderPickerSelectionDialog(
             containerColor = Color.White,
             shape = RoundedCornerShape(20.dp)
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsFullScreen(
+    viewModel: FolderViewModel,
+    onDismiss: () -> Unit
+) {
+    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
+    val isDryRun by viewModel.isDryRun.collectAsStateWithLifecycle()
+    val showSystemPicker by viewModel.showSystemPicker.collectAsStateWithLifecycle()
+
+    val primaryColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF2E6B48)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF6200EE)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0284C7)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFD97706)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFDC2626)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1D4ED8)
+        ThemeStyle.RED_PEACH -> Color(0xFFE05A47)
+    }
+
+    val backgroundColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFF4FBF5)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFFBF8FF)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFF0F9FF)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFFFBEB)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEF2F2)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFEFF6FF)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFF5F2)
+    }
+
+    val surfaceVarColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFE0EFE3)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFF0E5FC)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFE0F2FE)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFEF3C7)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFEE2E2)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFFDBEAFE)
+        ThemeStyle.RED_PEACH -> Color(0xFFFFE5DE)
+    }
+
+    val textPrimaryColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF181D19)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF1C0D30)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF0C4A6E)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF78350F)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF7F1D1D)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E3A8A)
+        ThemeStyle.RED_PEACH -> Color(0xFF5E2218)
+    }
+
+    val textSecondaryColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFF414942)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFF564966)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFF334155)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFF78716C)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFF991B1B)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF1E40AF)
+        ThemeStyle.RED_PEACH -> Color(0xFF8B5147)
+    }
+
+    val borderColor = when (currentTheme) {
+        ThemeStyle.FOREST_MINT -> Color(0xFFB1C9B7)
+        ThemeStyle.ROYAL_AMETHYST -> Color(0xFFD8C4F6)
+        ThemeStyle.NORDIC_OCEAN -> Color(0xFFBAE6FD)
+        ThemeStyle.SUNSET_AMBER -> Color(0xFFFDE68A)
+        ThemeStyle.CRIMSON_CHERRY -> Color(0xFFFCA5A5)
+        ThemeStyle.DEEP_SAPPHIRE -> Color(0xFF93C5FD)
+        ThemeStyle.RED_PEACH -> Color(0xFFF7C2B7)
+    }
+
+    BackHandler {
+        onDismiss()
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = backgroundColor,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                color = textPrimaryColor
+                            )
+                        )
+                        Text(
+                            text = "Folder Flattener • By BlazeFTL",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(40.dp)
+                            .background(surfaceVarColor, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back to home",
+                            tint = primaryColor
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = backgroundColor
+                )
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Section 1: Operation Preferences
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = surfaceVarColor),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Operations & Behavior",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimaryColor
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text(
+                                text = "Enforce Safe Preview Mode",
+                                fontSize = 14.sp,
+                                color = textPrimaryColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Inspects and calculates operations without altering or moving files on disk.",
+                                fontSize = 12.sp,
+                                color = textSecondaryColor,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        Switch(
+                            checked = isDryRun,
+                            onCheckedChange = { viewModel.toggleDryRun(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = primaryColor,
+                                uncheckedThumbColor = textSecondaryColor,
+                                uncheckedTrackColor = borderColor
+                            )
+                        )
+                    }
+
+                    HorizontalDivider(color = borderColor.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text(
+                                text = "Show System Storage Picker",
+                                fontSize = 14.sp,
+                                color = textPrimaryColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Display alternative Storage Access Framework system picker button for external SD cards.",
+                                fontSize = 12.sp,
+                                color = textSecondaryColor,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        Switch(
+                            checked = showSystemPicker,
+                            onCheckedChange = { viewModel.toggleSystemPicker(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = primaryColor,
+                                uncheckedThumbColor = textSecondaryColor,
+                                uncheckedTrackColor = borderColor
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Section 2: App Theme Style
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = surfaceVarColor),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = "App Theme Palette",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimaryColor
+                        )
+                    )
+                    Text(
+                        text = "Choose your preferred accent and contrast colors across the entire interface.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = textSecondaryColor)
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ThemeStyle.values().toList().chunked(3).forEach { rowStyles ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                rowStyles.forEach { style ->
+                                    val isSelected = style == currentTheme
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isSelected) primaryColor else Color.White)
+                                            .border(
+                                                width = if (isSelected) 2.dp else 1.dp,
+                                                color = if (isSelected) primaryColor else borderColor,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable { viewModel.setThemeStyle(style) }
+                                            .padding(vertical = 12.dp, horizontal = 6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when (style) {
+                                                ThemeStyle.FOREST_MINT -> "Mint"
+                                                ThemeStyle.ROYAL_AMETHYST -> "Amethyst"
+                                                ThemeStyle.NORDIC_OCEAN -> "Ocean"
+                                                ThemeStyle.SUNSET_AMBER -> "Amber"
+                                                ThemeStyle.CRIMSON_CHERRY -> "Crimson"
+                                                ThemeStyle.DEEP_SAPPHIRE -> "Sapphire"
+                                                ThemeStyle.RED_PEACH -> "Peach"
+                                            },
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else textPrimaryColor,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                if (rowStyles.size < 3) {
+                                    repeat(3 - rowStyles.size) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: App Information & Specs
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = surfaceVarColor),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "About & Information",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimaryColor
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Application", fontSize = 13.sp, color = textSecondaryColor)
+                        Text("Folder Flattener", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Version", fontSize = 13.sp, color = textSecondaryColor)
+                        Text("v1.1.0-bold", fontSize = 13.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Developer", fontSize = 13.sp, color = textSecondaryColor)
+                        Text("BlazeFTL", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Engine", fontSize = 13.sp, color = textSecondaryColor)
+                        Text("Bottom-up Recursive Unnester", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("License", fontSize = 13.sp, color = textSecondaryColor)
+                        Text("MIT Open Source", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
+                    }
+                }
+            }
+
+            // Close / Done button at bottom
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(vertical = 14.dp)
+            ) {
+                Text(
+                    text = "Close Settings",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White
+                )
+            }
+        }
     }
 }

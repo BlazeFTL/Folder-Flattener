@@ -77,46 +77,59 @@ object UntanglerEngine {
     /**
      * Recursively computes the action list or executes them.
      */
-    fun process(targetPath: String, isDryRun: Boolean): UntangleSummary {
+    fun process(
+        targetPath: String,
+        isDryRun: Boolean,
+        onProgress: ((current: Int, total: Int, currentFolder: String) -> Unit)? = null,
+        onLog: ((String) -> Unit)? = null
+    ): UntangleSummary {
         val rootDir = File(targetPath)
         val logs = mutableListOf<String>()
         val actions = mutableListOf<UntangleAction>()
 
-        logs.add("Initial Directory: ${rootDir.absolutePath}")
+        fun recordLog(msg: String) {
+            logs.add(msg)
+            onLog?.invoke(msg)
+        }
+
+        recordLog("Initial Directory: ${rootDir.absolutePath}")
         
         // Ensure root directory exists and is valid
         try {
             if (!rootDir.exists()) {
-                logs.add("❌ ERROR: Target path does not exist!")
+                recordLog("❌ ERROR: Target path does not exist!")
                 return UntangleSummary(0, 0, 0, 0, emptyList(), logs)
             }
             if (!rootDir.isDirectory) {
-                logs.add("❌ ERROR: Target path is a file, not a directory!")
+                recordLog("❌ ERROR: Target path is a file, not a directory!")
                 return UntangleSummary(0, 0, 0, 0, emptyList(), logs)
             }
             if (!rootDir.canRead()) {
-                logs.add("❌ ERROR: Permission denied. Cannot read directory!")
+                recordLog("❌ ERROR: Permission denied. Cannot read directory!")
                 return UntangleSummary(0, 0, 0, 0, emptyList(), logs)
             }
         } catch (e: Exception) {
-            logs.add("❌ ERROR checking root directory: ${e.localizedMessage ?: "Unknown error"}")
+            recordLog("❌ ERROR checking root directory: ${e.localizedMessage ?: "Unknown error"}")
             return UntangleSummary(0, 0, 0, 0, emptyList(), logs)
         }
 
         if (isDryRun) {
-            logs.add("⏩ SAFE PREVIEW MODE ACTIVE — No files will be modified.")
+            recordLog("⏩ SAFE PREVIEW MODE ACTIVE — No files will be modified.")
         } else {
-            logs.add("⚡ LIVE MODE ACTIVE — Moving files and organizing folders...")
+            recordLog("⚡ LIVE MODE ACTIVE — Moving files and organizing folders...")
         }
 
         // Get all top-level directories under root, ignoring hidden ones
         val dList = try {
             rootDir.listFiles { file -> file.isDirectory && !file.name.startsWith(".") } ?: emptyArray()
         } catch (e: Exception) {
-            logs.add("❌ ERROR: Failed to list directories in ${rootDir.name} due to security constraints. (${e.localizedMessage})")
+            recordLog("❌ ERROR: Failed to list directories in ${rootDir.name} due to security constraints. (${e.localizedMessage})")
             return UntangleSummary(0, 0, 0, 0, emptyList(), logs)
         }
         
+        val totalFolders = dList.size
+        recordLog("Found $totalFolders subdirectories to inspect in ${rootDir.name}.")
+
         var foldersProcessed = 0
         var foldersFlattened = 0
         var filesPromoted = 0
@@ -124,10 +137,11 @@ object UntanglerEngine {
 
         for (d in dList) {
             foldersProcessed++
+            onProgress?.invoke(foldersProcessed, totalFolders, d.name)
 
             // Check if directory can be read
             if (!d.canRead()) {
-                logs.add("  ❌ Failed to inspect '${d.name}': Permission denied (Unreadable)")
+                recordLog("  ❌ Failed to inspect '${d.name}': Permission denied (Unreadable)")
                 continue
             }
 
@@ -161,17 +175,17 @@ object UntanglerEngine {
                     if (!isDryRun) {
                         try {
                             if (!fileItem.canRead() || !d.canWrite()) {
-                                logs.add("  ❌ Failed to move '${fileItem.name}': Access denied")
+                                recordLog("  ❌ Failed to move '${fileItem.name}': Access denied")
                                 continue
                             }
                             val uniqueDest = findUniqueFile(d, fileItem.name)
                             if (fileItem.renameTo(uniqueDest)) {
-                                logs.add("  ✔ Successfully unnested subfolder file: ${fileItem.name} into ${d.name}")
+                                recordLog("  ✔ Successfully unnested subfolder file: ${fileItem.name} into ${d.name}")
                             } else {
-                                logs.add("  ❌ Failed to move '${fileItem.name}': Rename failed")
+                                recordLog("  ❌ Failed to move '${fileItem.name}': Rename failed")
                             }
                         } catch (e: Exception) {
-                            logs.add("  ❌ Error moving '${fileItem.name}': ${e.localizedMessage}")
+                            recordLog("  ❌ Error moving '${fileItem.name}': ${e.localizedMessage}")
                         }
                     }
                 }
@@ -197,13 +211,13 @@ object UntanglerEngine {
                     if (!isDryRun) {
                         try {
                             if (subDir.delete()) {
-                                logs.add("  🗑 Deleted empty subfolder '${subDir.name}'")
+                                recordLog("  🗑 Deleted empty subfolder '${subDir.name}'")
                                 foldersFlattened++
                             } else {
-                                logs.add("  ⚠ Could not delete subfolder '${subDir.name}'")
+                                recordLog("  ⚠ Could not delete subfolder '${subDir.name}'")
                             }
                         } catch (e: Exception) {
-                            logs.add("  ⚠ Error deleting subfolder '${subDir.name}': ${e.localizedMessage}")
+                            recordLog("  ⚠ Error deleting subfolder '${subDir.name}': ${e.localizedMessage}")
                         }
                     } else {
                         foldersFlattened++
@@ -247,12 +261,12 @@ object UntanglerEngine {
                 if (!isDryRun) {
                     try {
                         if (!singleItem.canRead() || !rootDir.canWrite()) {
-                            logs.add("  ❌ Failed to move file '${singleItem.name}': Access denied")
+                            recordLog("  ❌ Failed to move file '${singleItem.name}': Access denied")
                             continue
                         }
                         val uniqueDest = findUniqueFile(rootDir, singleItem.name)
                         if (singleItem.renameTo(uniqueDest)) {
-                            logs.add("  ✨ Successfully moved single file: ${singleItem.name} up to root directory")
+                            recordLog("  ✨ Successfully moved single file: ${singleItem.name} up to root directory")
 
                             actions.add(
                                 UntangleAction(
@@ -265,20 +279,20 @@ object UntanglerEngine {
                             )
                             try {
                                 if (d.delete()) {
-                                    logs.add("  🗑 Deleted empty parent container '${d.name}'")
+                                    recordLog("  🗑 Deleted empty parent container '${d.name}'")
                                     foldersDeleted++
                                 } else {
-                                    logs.add("  ⚠ Could not delete empty parent container '${d.name}'")
+                                    recordLog("  ⚠ Could not delete empty parent container '${d.name}'")
                                 }
                             } catch (ex: Exception) {
-                                logs.add("  ⚠ Error deleting parent container '${d.name}': ${ex.localizedMessage}")
+                                recordLog("  ⚠ Error deleting parent container '${d.name}': ${ex.localizedMessage}")
                             }
                             filesPromoted++
                         } else {
-                            logs.add("  ❌ Failed to promote file '${singleItem.name}'")
+                            recordLog("  ❌ Failed to promote file '${singleItem.name}'")
                         }
                     } catch (e: Exception) {
-                        logs.add("  ❌ Error promoting file '${singleItem.name}': ${e.localizedMessage}")
+                        recordLog("  ❌ Error promoting file '${singleItem.name}': ${e.localizedMessage}")
                     }
                 } else {
                     filesPromoted++
@@ -297,13 +311,13 @@ object UntanglerEngine {
                 if (!isDryRun) {
                     try {
                         if (d.delete()) {
-                            logs.add("  🗑 Deleted empty folder '${d.name}'")
+                            recordLog("  🗑 Deleted empty folder '${d.name}'")
                             foldersDeleted++
                         } else {
-                            logs.add("  ⚠ Could not delete empty folder '${d.name}'")
+                            recordLog("  ⚠ Could not delete empty folder '${d.name}'")
                         }
                     } catch (e: Exception) {
-                        logs.add("  ⚠ Error deleting folder '${d.name}': ${e.localizedMessage}")
+                        recordLog("  ⚠ Error deleting folder '${d.name}': ${e.localizedMessage}")
                     }
                 } else {
                     foldersDeleted++
@@ -311,7 +325,7 @@ object UntanglerEngine {
             }
         }
 
-        logs.add("All tasks successfully parsed!")
+        recordLog("All tasks successfully parsed! Processed $foldersProcessed folders.")
 
         return UntangleSummary(
             foldersProcessed = foldersProcessed,
