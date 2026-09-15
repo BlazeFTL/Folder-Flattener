@@ -439,12 +439,13 @@ fun MainScreen(
         )
     }
 
-    // MAIN BOLD SCAFFOLD THEME WRAPPING APP
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = BoldBackground,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { paddingValues ->
+    Box(modifier = modifier.fillMaxSize()) {
+        // MAIN BOLD SCAFFOLD THEME WRAPPING APP
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = BoldBackground,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -693,12 +694,13 @@ fun MainScreen(
                         Button(
                             onClick = { directoryPickerLauncher.launch(null) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = BoldSurfaceVar,
+                                containerColor = Color.White,
                                 contentColor = BoldPrimary
                             ),
                             border = BorderStroke(1.5.dp, BoldBorder),
                             shape = RoundedCornerShape(24.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 12.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
@@ -708,7 +710,8 @@ fun MainScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 "Use System Storage Picker (External/SD)",
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
                             )
                         }
                     }
@@ -728,21 +731,45 @@ fun MainScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { viewModel.toggleDryRun(!isDryRun) }
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = "Safe Preview Mode",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextPrimary
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = if (isDryRun) "Safe Preview Mode" else "Live Clean Mode",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldTextPrimary
+                                    )
                                 )
-                            )
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            if (isDryRun) BoldPrimary.copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f),
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isDryRun) "SAFE PREVIEW" else "LIVE EXECUTION",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (isDryRun) BoldPrimary else Color(0xFFDC2626)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = if (isDryRun) {
-                                    "Inspects folders for nesting flattener candidates cleanly without altering any of your actual storage files."
+                                    "Inspects folders and previews actions cleanly without altering or moving files on disk."
                                 } else {
-                                    "Live Clean Mode active — redundant files will be moved up and empty subfolders will be removed permanently."
+                                    "Live Clean Mode active — redundant files will be moved up and empty subfolders deleted."
                                 },
                                 style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
                             )
@@ -754,8 +781,10 @@ fun MainScreen(
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = BoldPrimary,
-                                uncheckedThumbColor = BoldTextSecondary,
-                                uncheckedTrackColor = BoldBorder
+                                checkedBorderColor = Color.Transparent,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = BoldBorder,
+                                uncheckedBorderColor = BoldBorder
                             )
                         )
                     }
@@ -1189,7 +1218,7 @@ fun MainScreen(
             }
         )
     }
-
+    }
 }
 
 // Helper methods to resolve DocumentTree Android Document URIs to clean absolute paths
@@ -1754,44 +1783,51 @@ fun SettingsFullScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = backgroundColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
-                                color = textPrimaryColor
-                            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(surfaceVarColor, CircleShape)
+                        .border(1.dp, borderColor.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back to home",
+                        tint = primaryColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(18.dp))
+
+                Column {
+                    Text(
+                        text = "Settings",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            color = textPrimaryColor,
+                            fontSize = 24.sp,
+                            letterSpacing = (-0.5).sp
                         )
-                        Text(
-                            text = "Folder Flattener • By BlazeFTL",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = textSecondaryColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Folder Flattener • By BlazeFTL",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = textSecondaryColor,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
                         )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(40.dp)
-                            .background(surfaceVarColor, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back to home",
-                            tint = primaryColor
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = backgroundColor
-                )
-            )
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         Column(
@@ -1821,19 +1857,48 @@ fun SettingsFullScreen(
                     )
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { viewModel.toggleDryRun(!isDryRun) }
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Enforce Safe Preview Mode",
+                                    fontSize = 14.sp,
+                                    color = textPrimaryColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            if (isDryRun) primaryColor.copy(alpha = 0.15f) else textSecondaryColor.copy(alpha = 0.15f),
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isDryRun) "ENABLED" else "DISABLED",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (isDryRun) primaryColor else textSecondaryColor
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Enforce Safe Preview Mode",
-                                fontSize = 14.sp,
-                                color = textPrimaryColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Inspects and calculates operations without altering or moving files on disk.",
+                                text = if (isDryRun) {
+                                    "Inspects and calculates operations without altering or moving files on disk."
+                                } else {
+                                    "Disabled — Live Clean mode will actually move files and delete empty subfolders."
+                                },
                                 fontSize = 12.sp,
                                 color = textSecondaryColor,
                                 lineHeight = 16.sp
@@ -1845,8 +1910,10 @@ fun SettingsFullScreen(
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = primaryColor,
-                                uncheckedThumbColor = textSecondaryColor,
-                                uncheckedTrackColor = borderColor
+                                checkedBorderColor = Color.Transparent,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = borderColor.copy(alpha = 0.8f),
+                                uncheckedBorderColor = borderColor
                             )
                         )
                     }
@@ -1854,19 +1921,48 @@ fun SettingsFullScreen(
                     HorizontalDivider(color = borderColor.copy(alpha = 0.5f))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { viewModel.toggleSystemPicker(!showSystemPicker) }
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Show System Storage Picker",
+                                    fontSize = 14.sp,
+                                    color = textPrimaryColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            if (showSystemPicker) primaryColor.copy(alpha = 0.15f) else textSecondaryColor.copy(alpha = 0.15f),
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (showSystemPicker) "VISIBLE" else "HIDDEN",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (showSystemPicker) primaryColor else textSecondaryColor
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Show System Storage Picker",
-                                fontSize = 14.sp,
-                                color = textPrimaryColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Display alternative Storage Access Framework system picker button for external SD cards.",
+                                text = if (showSystemPicker) {
+                                    "Secondary button is visible on home for Storage Access Framework / SD cards."
+                                } else {
+                                    "Hidden from home — only the primary folder selector is displayed."
+                                },
                                 fontSize = 12.sp,
                                 color = textSecondaryColor,
                                 lineHeight = 16.sp
@@ -1878,8 +1974,10 @@ fun SettingsFullScreen(
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = primaryColor,
-                                uncheckedThumbColor = textSecondaryColor,
-                                uncheckedTrackColor = borderColor
+                                checkedBorderColor = Color.Transparent,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = borderColor.copy(alpha = 0.8f),
+                                uncheckedBorderColor = borderColor
                             )
                         )
                     }
