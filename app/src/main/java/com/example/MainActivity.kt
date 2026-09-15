@@ -728,49 +728,88 @@ fun MainScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { viewModel.toggleDryRun(!isDryRun) }
-                    ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = if (isDryRun) "Safe Preview Mode" else "Live Clean Mode",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextPrimary
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = if (isDryRun) {
-                                    "Inspects folders and previews actions cleanly without altering or moving files on disk."
-                                } else {
-                                    "Live Clean Mode active — redundant files will be moved up and empty subfolders deleted."
-                                },
-                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
-                            )
+                    // Segmented Mode Selector Pills
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White, RoundedCornerShape(16.dp))
+                                .border(1.dp, BoldBorder.copy(alpha = 0.8f), RoundedCornerShape(16.dp))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Safe Preview Option
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isDryRun) BoldPrimary else Color.Transparent)
+                                    .clickable { viewModel.toggleDryRun(true) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = if (isDryRun) Color.White else BoldTextSecondary
+                                    )
+                                    Text(
+                                        text = "Safe Preview",
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isDryRun) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isDryRun) Color.White else BoldTextSecondary
+                                    )
+                                }
+                            }
+
+                            // Live Clean Option
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (!isDryRun) BoldPrimary else Color.Transparent)
+                                    .clickable { viewModel.toggleDryRun(false) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = if (!isDryRun) Color.White else BoldTextSecondary
+                                    )
+                                    Text(
+                                        text = "Live Clean",
+                                        fontSize = 13.sp,
+                                        fontWeight = if (!isDryRun) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (!isDryRun) Color.White else BoldTextSecondary
+                                    )
+                                }
+                            }
                         }
 
-                        Switch(
-                            checked = isDryRun,
-                            onCheckedChange = { viewModel.toggleDryRun(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = BoldPrimary,
-                                checkedBorderColor = Color.Transparent,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = BoldBorder,
-                                uncheckedBorderColor = BoldBorder
-                            )
+                        Text(
+                            text = if (isDryRun) {
+                                "Safe Preview: Inspects folders and previews actions cleanly without altering or moving files on disk."
+                            } else {
+                                "Live Clean: Redundant files will be moved up and empty subfolders will be deleted permanently."
+                            },
+                            style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
                         )
                     }
 
                     // Real-time progress display during run
-                    if (isRunning && progress != null) {
+                    val currentProg = progress
+                    if (isRunning && currentProg != null) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -785,14 +824,14 @@ fun MainScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Processing ${progress!!.current} of ${progress!!.total} folders",
+                                    text = "Processing ${currentProg.current} of ${currentProg.total} folders",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = BoldTextPrimary
                                     )
                                 )
                                 Text(
-                                    text = "${(progress!!.percentage * 100).toInt()}%",
+                                    text = "${(currentProg.percentage * 100).toInt()}%",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = BoldPrimary
@@ -800,7 +839,7 @@ fun MainScreen(
                                 )
                             }
                             LinearProgressIndicator(
-                                progress = { progress!!.percentage },
+                                progress = { progress?.percentage ?: currentProg.percentage },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(8.dp)
@@ -808,7 +847,7 @@ fun MainScreen(
                                 color = BoldPrimary,
                                 trackColor = BoldBorder.copy(alpha = 0.4f)
                             )
-                            if (progress!!.currentFolder.isNotBlank()) {
+                            if (currentProg.currentFolder.isNotBlank()) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -820,7 +859,7 @@ fun MainScreen(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Text(
-                                        text = progress!!.currentFolder,
+                                        text = currentProg.currentFolder,
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             color = BoldTextSecondary,
                                             fontFamily = FontFamily.Monospace
@@ -854,8 +893,9 @@ fun MainScreen(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            val runningText = if (progress != null && progress!!.total > 0) {
-                                if (isDryRun) "Previewing (${progress!!.current}/${progress!!.total})..." else "Cleaning (${progress!!.current}/${progress!!.total})..."
+                            val runningProg = progress
+                            val runningText = if (runningProg != null && runningProg.total > 0) {
+                                if (isDryRun) "Previewing (${runningProg.current}/${runningProg.total})..." else "Cleaning (${runningProg.current}/${runningProg.total})..."
                             } else {
                                 if (isDryRun) "Running Preview..." else "Running Clean..."
                             }
