@@ -187,6 +187,8 @@ object UntanglerEngine {
                         } catch (e: Exception) {
                             recordLog("  ❌ Error moving '${fileItem.name}': ${e.localizedMessage}")
                         }
+                    } else {
+                        recordLog("  ⏩ [Preview] Would unnest file '${fileItem.name}' into ${d.name}/")
                     }
                 }
 
@@ -221,6 +223,7 @@ object UntanglerEngine {
                         }
                     } else {
                         foldersFlattened++
+                        recordLog("  ⏩ [Preview] Would delete empty subfolder '${subDir.name}'")
                     }
                 }
             }
@@ -295,6 +298,8 @@ object UntanglerEngine {
                         recordLog("  ❌ Error promoting file '${singleItem.name}': ${e.localizedMessage}")
                     }
                 } else {
+                    recordLog("  ⏩ [Preview] Would move single file '${singleItem.name}' up to root directory")
+                    recordLog("  ⏩ [Preview] Would delete redundant parent container '${d.name}'")
                     filesPromoted++
                     foldersDeleted++
                 }
@@ -320,12 +325,19 @@ object UntanglerEngine {
                         recordLog("  ⚠ Error deleting folder '${d.name}': ${e.localizedMessage}")
                     }
                 } else {
+                    recordLog("  ⏩ [Preview] Would delete redundant empty folder '${d.name}'")
                     foldersDeleted++
                 }
             }
         }
 
-        recordLog("All tasks successfully parsed! Processed $foldersProcessed folders.")
+        if (isDryRun) {
+            recordLog("✨ Safe Preview Complete: 0 files modified on disk.")
+            recordLog("   Calculated candidates: $filesPromoted files to promote, $foldersDeleted folders to delete.")
+        } else {
+            recordLog("✨ Clean Sweep Complete! Successfully processed $foldersProcessed folders.")
+            recordLog("   Moved $filesPromoted files and deleted $foldersDeleted folders.")
+        }
 
         return UntangleSummary(
             foldersProcessed = foldersProcessed,

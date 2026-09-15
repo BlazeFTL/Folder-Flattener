@@ -737,33 +737,13 @@ fun MainScreen(
                             .clickable { viewModel.toggleDryRun(!isDryRun) }
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = if (isDryRun) "Safe Preview Mode" else "Live Clean Mode",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = BoldTextPrimary
-                                    )
+                            Text(
+                                text = if (isDryRun) "Safe Preview Mode" else "Live Clean Mode",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = BoldTextPrimary
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            if (isDryRun) BoldPrimary.copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f),
-                                            RoundedCornerShape(6.dp)
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (isDryRun) "SAFE PREVIEW" else "LIVE EXECUTION",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isDryRun) BoldPrimary else Color(0xFFDC2626)
-                                    )
-                                }
-                            }
+                            )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = if (isDryRun) {
@@ -875,9 +855,9 @@ fun MainScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             val runningText = if (progress != null && progress!!.total > 0) {
-                                "Cleaning (${progress!!.current}/${progress!!.total})..."
+                                if (isDryRun) "Previewing (${progress!!.current}/${progress!!.total})..." else "Cleaning (${progress!!.current}/${progress!!.total})..."
                             } else {
-                                "Running Clean..."
+                                if (isDryRun) "Running Preview..." else "Running Clean..."
                             }
                             Text(runningText, fontSize = 14.sp)
                         } else {
@@ -910,7 +890,7 @@ fun MainScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Results",
+                            text = if (isDryRun) "Preview Results (No files modified)" else "Results",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = BoldTextPrimary
@@ -927,7 +907,7 @@ fun MainScreen(
                                         .background(BoldActivePurple, RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("PROCESSED", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
+                                    Text(if (isDryRun) "SCANNED" else "PROCESSED", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.foldersProcessed.toString(),
@@ -946,7 +926,7 @@ fun MainScreen(
                                         .background(BoldSoftBlue, RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("UNNESTED", fontSize = 10.sp, color = BoldTextNavy, fontWeight = FontWeight.Bold)
+                                    Text(if (isDryRun) "TO UNNEST" else "UNNESTED", fontSize = 10.sp, color = BoldTextNavy, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.foldersFlattened.toString(),
@@ -967,7 +947,7 @@ fun MainScreen(
                                         .background(Color(0xFFE8DEF8), RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("FILES MOVED UP", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
+                                    Text(if (isDryRun) "FILES TO MOVE" else "FILES MOVED UP", fontSize = 10.sp, color = BoldTextAmethyst, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.filesPromoted.toString(),
@@ -987,7 +967,7 @@ fun MainScreen(
                                         .border(1.dp, BoldBorder, RoundedCornerShape(20.dp))
                                         .padding(16.dp)
                                 ) {
-                                    Text("FOLDERS DELETED", fontSize = 10.sp, color = BoldTextSecondary, fontWeight = FontWeight.Bold)
+                                    Text(if (isDryRun) "FOLDERS TO DELETE" else "FOLDERS DELETED", fontSize = 10.sp, color = BoldTextSecondary, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         sum.foldersDeleted.toString(),
@@ -1866,32 +1846,12 @@ fun SettingsFullScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Enforce Safe Preview Mode",
-                                    fontSize = 14.sp,
-                                    color = textPrimaryColor,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            if (isDryRun) primaryColor.copy(alpha = 0.15f) else textSecondaryColor.copy(alpha = 0.15f),
-                                            RoundedCornerShape(6.dp)
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (isDryRun) "ENABLED" else "DISABLED",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isDryRun) primaryColor else textSecondaryColor
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "Enforce Safe Preview Mode",
+                                fontSize = 14.sp,
+                                color = textPrimaryColor,
+                                fontWeight = FontWeight.Bold
+                            )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = if (isDryRun) {
@@ -1930,32 +1890,12 @@ fun SettingsFullScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Show System Storage Picker",
-                                    fontSize = 14.sp,
-                                    color = textPrimaryColor,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            if (showSystemPicker) primaryColor.copy(alpha = 0.15f) else textSecondaryColor.copy(alpha = 0.15f),
-                                            RoundedCornerShape(6.dp)
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (showSystemPicker) "VISIBLE" else "HIDDEN",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (showSystemPicker) primaryColor else textSecondaryColor
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "Show System Storage Picker",
+                                fontSize = 14.sp,
+                                color = textPrimaryColor,
+                                fontWeight = FontWeight.Bold
+                            )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = if (showSystemPicker) {
@@ -2052,62 +1992,6 @@ fun SettingsFullScreen(
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            // Section 3: App Information & Specs
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = surfaceVarColor),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "About & Information",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimaryColor
-                        )
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Application", fontSize = 13.sp, color = textSecondaryColor)
-                        Text("Folder Flattener", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Version", fontSize = 13.sp, color = textSecondaryColor)
-                        Text("v1.1.0-bold", fontSize = 13.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = textPrimaryColor)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Developer", fontSize = 13.sp, color = textSecondaryColor)
-                        Text("BlazeFTL", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Engine", fontSize = 13.sp, color = textSecondaryColor)
-                        Text("Bottom-up Recursive Unnester", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("License", fontSize = 13.sp, color = textSecondaryColor)
-                        Text("MIT Open Source", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
                     }
                 }
             }
