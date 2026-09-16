@@ -105,6 +105,8 @@ fun MainScreen(
     val context = LocalContext.current
     val targetPath by viewModel.targetPath.collectAsStateWithLifecycle()
     val isDryRun by viewModel.isDryRun.collectAsStateWithLifecycle()
+    val safePreviewSetting by viewModel.safePreviewSetting.collectAsStateWithLifecycle()
+    val previewCompleted by viewModel.previewCompleted.collectAsStateWithLifecycle()
     val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
     val isRunning by viewModel.isRunning.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -733,29 +735,53 @@ fun MainScreen(
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = if (isDryRun) 20.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = if (safePreviewSetting && isDryRun) 20.dp else 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Only show Safe Preview details if Safe Preview is enabled in Settings
-                    if (isDryRun) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable(enabled = !isRunning) { viewModel.toggleDryRun(false) },
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Safe Preview Mode",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BoldTextPrimary
+                    // Safe Preview Description: shown when Safe Preview is active.
+                    // When Safe Preview is enabled in Settings and is in Live Clean mode, show Run Live Clean description.
+                    // When Safe Preview is OFF in Settings, no description is shown (only the button).
+                    if (safePreviewSetting) {
+                        if (isDryRun) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(enabled = !isRunning) { viewModel.toggleDryRun(false) },
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Safe Preview Mode",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldTextPrimary
+                                    )
                                 )
-                            )
-                            Text(
-                                text = "Inspects folders and previews actions cleanly without altering or moving files on disk.",
-                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
-                            )
+                                Text(
+                                    text = "Inspects folders and previews actions cleanly without altering or moving files on disk.",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                                )
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(enabled = !isRunning) { viewModel.toggleDryRun(true) },
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Live Clean Mode",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BoldTextPrimary
+                                    )
+                                )
+                                Text(
+                                    text = "Moves files from nested subfolders into the parent directory and clears empty folders.",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                                )
+                            }
                         }
                     }
 
@@ -824,14 +850,24 @@ fun MainScreen(
                         }
                     }
 
-                    // TRIGGER ACTIONS ROW WITH UP-DOWN MODE SWITCHER
+                    // TRIGGER ACTIONS ROW WITH CONDITIONAL SWITCHER AND RESCAN BUTTON
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val isPostPreview = previewCompleted && isDryRun && summary != null
+
                         Button(
-                            onClick = { showConfirmDialog = true },
+                            onClick = {
+                                if (isPostPreview) {
+                                    // When in post-preview mode, clicking "Run Live Clean" switches to live clean and confirms
+                                    viewModel.toggleDryRun(false)
+                                    showConfirmDialog = true
+                                } else {
+                                    showConfirmDialog = true
+                                }
+                            },
                             enabled = !isRunning && targetPath.isNotEmpty(),
                             shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.buttonColors(
@@ -841,7 +877,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp),
-                            contentPadding = PaddingValues(vertical = 12.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
                         ) {
                             if (isRunning) {
                                 CircularProgressIndicator(
@@ -859,14 +895,20 @@ fun MainScreen(
                                 Text(runningText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                             } else {
                                 Icon(
-                                    imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
+                                    imageVector = if (isDryRun && !isPostPreview) Icons.Default.Search else Icons.Default.PlayArrow,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (isDryRun) "Preview Clean" else "Run Live Clean",
+                                    text = if (isPostPreview) {
+                                        "Run Live Clean"
+                                    } else if (isDryRun) {
+                                        "Preview Clean"
+                                    } else {
+                                        "Run Live Clean"
+                                    },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
                                     color = Color.White
@@ -874,22 +916,55 @@ fun MainScreen(
                             }
                         }
 
-                        // Up-Down icon button on the right side
-                        Surface(
-                            onClick = { viewModel.toggleDryRun(!isDryRun) },
-                            enabled = !isRunning,
-                            shape = RoundedCornerShape(24.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.5.dp, BoldBorder),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
+                        // ReScan button appears on the right side once Safe Preview has completed
+                        if (isPostPreview) {
+                            OutlinedButton(
+                                onClick = { viewModel.rescanPreview() },
+                                enabled = !isRunning && targetPath.isNotEmpty(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.White,
+                                    contentColor = BoldPrimary
+                                ),
+                                border = BorderStroke(1.5.dp, BoldBorder),
+                                modifier = Modifier.height(48.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Default.SwapVert,
-                                    contentDescription = if (isDryRun) "Switch to Live Clean Mode" else "Switch to Safe Preview Mode",
-                                    tint = BoldPrimary,
-                                    modifier = Modifier.size(22.dp)
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "ReScan folder",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = BoldPrimary
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "ReScan",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = BoldPrimary
+                                )
+                            }
+                        }
+
+                        // Up-Down icon button on the right side:
+                        // Only shown if Safe Preview is enabled in Settings AND not in post-preview mode
+                        if (safePreviewSetting && !isPostPreview) {
+                            Surface(
+                                onClick = { viewModel.toggleDryRun(!isDryRun) },
+                                enabled = !isRunning,
+                                shape = RoundedCornerShape(24.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.5.dp, BoldBorder),
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.SwapVert,
+                                        contentDescription = if (isDryRun) "Switch to Live Clean Mode" else "Switch to Safe Preview Mode",
+                                        tint = BoldPrimary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1711,6 +1786,7 @@ fun SettingsFullScreen(
 ) {
     val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
     val isDryRun by viewModel.isDryRun.collectAsStateWithLifecycle()
+    val safePreviewSetting by viewModel.safePreviewSetting.collectAsStateWithLifecycle()
     val showSystemPicker by viewModel.showSystemPicker.collectAsStateWithLifecycle()
 
     val primaryColor = when (currentTheme) {
@@ -1858,7 +1934,7 @@ fun SettingsFullScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable { viewModel.toggleDryRun(!isDryRun) }
+                            .clickable { viewModel.toggleSafePreviewSetting(!safePreviewSetting) }
                             .padding(vertical = 8.dp, horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -1872,7 +1948,7 @@ fun SettingsFullScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (isDryRun) {
+                                text = if (safePreviewSetting) {
                                     "Inspects and calculates operations without altering or moving files on disk."
                                 } else {
                                     "Disabled — Live Clean mode will actually move files and delete empty subfolders."
@@ -1883,8 +1959,8 @@ fun SettingsFullScreen(
                             )
                         }
                         Switch(
-                            checked = isDryRun,
-                            onCheckedChange = { viewModel.toggleDryRun(it) },
+                            checked = safePreviewSetting,
+                            onCheckedChange = { viewModel.toggleSafePreviewSetting(it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = primaryColor,

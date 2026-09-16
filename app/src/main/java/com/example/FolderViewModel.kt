@@ -59,6 +59,14 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
     )
     val isDryRun: StateFlow<Boolean> = _isDryRun.asStateFlow()
 
+    private val _safePreviewSetting = MutableStateFlow(
+        sharedPrefs.getBoolean("safe_preview_setting", true)
+    )
+    val safePreviewSetting: StateFlow<Boolean> = _safePreviewSetting.asStateFlow()
+
+    private val _previewCompleted = MutableStateFlow(false)
+    val previewCompleted: StateFlow<Boolean> = _previewCompleted.asStateFlow()
+
     private val _showSystemPicker = MutableStateFlow(
         sharedPrefs.getBoolean("show_system_picker", true)
     )
@@ -112,14 +120,29 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setTargetPath(path: String) {
+        val pathChanged = _targetPath.value != path
         _targetPath.value = path
         sharedPrefs.edit().putString("target_path", path).apply()
         addToHistory(path)
+        if (pathChanged) {
+            _previewCompleted.value = false
+        }
     }
 
     fun toggleDryRun(value: Boolean) {
         _isDryRun.value = value
         sharedPrefs.edit().putBoolean("is_dry_run", value).apply()
+    }
+
+    fun toggleSafePreviewSetting(enabled: Boolean) {
+        _safePreviewSetting.value = enabled
+        sharedPrefs.edit().putBoolean("safe_preview_setting", enabled).apply()
+        if (!enabled) {
+            _isDryRun.value = false
+            _previewCompleted.value = false
+        } else {
+            _isDryRun.value = true
+        }
     }
 
     fun toggleSystemPicker(value: Boolean) {
@@ -144,14 +167,18 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun runUntangler() {
+    fun runUntangler(overrideDryRun: Boolean? = null) {
         if (_isRunning.value) return
         _isRunning.value = true
         _progress.value = null
 
+        val dryRun = overrideDryRun ?: _isDryRun.value
+        if (overrideDryRun != null) {
+            _isDryRun.value = overrideDryRun
+        }
+
         viewModelScope.launch {
             val path = _targetPath.value
-            val dryRun = _isDryRun.value
 
             _logs.value = listOf("Initializing untangling process on: $path...")
             _actions.value = emptyList()
@@ -175,7 +202,16 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
             _summary.value = result
             _progress.value = null
             _isRunning.value = false
+            if (dryRun) {
+                _previewCompleted.value = true
+            } else {
+                _previewCompleted.value = false
+            }
         }
+    }
+
+    fun rescanPreview() {
+        runUntangler(overrideDryRun = true)
     }
 
     fun clearLogs() {
@@ -183,5 +219,6 @@ class FolderViewModel(application: Application) : AndroidViewModel(application) 
         _actions.value = emptyList()
         _summary.value = null
         _progress.value = null
+        _previewCompleted.value = false
     }
 }
