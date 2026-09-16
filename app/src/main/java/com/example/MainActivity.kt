@@ -728,83 +728,23 @@ fun MainScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Segmented Mode Selector Pills
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White, RoundedCornerShape(16.dp))
-                                .border(1.dp, BoldBorder.copy(alpha = 0.8f), RoundedCornerShape(16.dp))
-                                .padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Safe Preview Option
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isDryRun) BoldPrimary else Color.Transparent)
-                                    .clickable { viewModel.toggleDryRun(true) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = if (isDryRun) Color.White else BoldTextSecondary
-                                    )
-                                    Text(
-                                        text = "Safe Preview",
-                                        fontSize = 13.sp,
-                                        fontWeight = if (isDryRun) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isDryRun) Color.White else BoldTextSecondary
-                                    )
-                                }
-                            }
-
-                            // Live Clean Option
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (!isDryRun) BoldPrimary else Color.Transparent)
-                                    .clickable { viewModel.toggleDryRun(false) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = if (!isDryRun) Color.White else BoldTextSecondary
-                                    )
-                                    Text(
-                                        text = "Live Clean",
-                                        fontSize = 13.sp,
-                                        fontWeight = if (!isDryRun) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (!isDryRun) Color.White else BoldTextSecondary
-                                    )
-                                }
-                            }
+                    // Only show Safe Preview details if Safe Preview is enabled in Settings
+                    if (isDryRun) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "Safe Preview Mode",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = BoldTextPrimary
+                                )
+                            )
+                            Text(
+                                text = "Inspects folders and previews actions cleanly without altering or moving files on disk.",
+                                style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
+                            )
                         }
 
-                        Text(
-                            text = if (isDryRun) {
-                                "Safe Preview: Inspects folders and previews actions cleanly without altering or moving files on disk."
-                            } else {
-                                "Live Clean: Redundant files will be moved up and empty subfolders will be deleted permanently."
-                            },
-                            style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
-                        )
+                        HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
                     }
 
                     // Real-time progress display during run
@@ -1887,7 +1827,7 @@ fun SettingsFullScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                             Text(
-                                text = "Enforce Safe Preview Mode",
+                                text = "Safe Preview Mode",
                                 fontSize = 14.sp,
                                 color = textPrimaryColor,
                                 fontWeight = FontWeight.Bold
