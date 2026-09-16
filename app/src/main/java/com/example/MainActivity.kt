@@ -29,6 +29,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -673,7 +677,9 @@ fun MainScreen(
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(24.dp),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Icon(
@@ -699,11 +705,13 @@ fun MainScreen(
                             ),
                             border = BorderStroke(1.5.dp, BoldBorder),
                             shape = RoundedCornerShape(24.dp),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
                             contentPadding = PaddingValues(vertical = 12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.OpenInNew,
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -725,12 +733,18 @@ fun MainScreen(
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = if (isDryRun) 20.dp else 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Only show Safe Preview details if Safe Preview is enabled in Settings
                     if (isDryRun) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(enabled = !isRunning) { viewModel.toggleDryRun(false) },
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Text(
                                 text = "Safe Preview Mode",
                                 style = MaterialTheme.typography.titleMedium.copy(
@@ -743,8 +757,6 @@ fun MainScreen(
                                 style = MaterialTheme.typography.bodySmall.copy(color = BoldTextSecondary)
                             )
                         }
-
-                        HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
                     }
 
                     // Real-time progress display during run
@@ -812,47 +824,73 @@ fun MainScreen(
                         }
                     }
 
-                    HorizontalDivider(color = BoldBorder.copy(alpha = 0.4f), thickness = 1.dp)
-
-                    // TRIGGER ACTIONS ROW
-                    Button(
-                        onClick = { showConfirmDialog = true },
-                        enabled = !isRunning && targetPath.isNotEmpty(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BoldPrimary,
-                            disabledContainerColor = BoldBorder
-                        ),
+                    // TRIGGER ACTIONS ROW WITH UP-DOWN MODE SWITCHER
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(vertical = 12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isRunning) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            val runningProg = progress
-                            val runningText = if (runningProg != null && runningProg.total > 0) {
-                                if (isDryRun) "Previewing (${runningProg.current}/${runningProg.total})..." else "Cleaning (${runningProg.current}/${runningProg.total})..."
+                        Button(
+                            onClick = { showConfirmDialog = true },
+                            enabled = !isRunning && targetPath.isNotEmpty(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BoldPrimary,
+                                disabledContainerColor = BoldBorder
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            if (isRunning) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                val runningProg = progress
+                                val runningText = if (runningProg != null && runningProg.total > 0) {
+                                    if (isDryRun) "Previewing (${runningProg.current}/${runningProg.total})..." else "Cleaning (${runningProg.current}/${runningProg.total})..."
+                                } else {
+                                    if (isDryRun) "Running Preview..." else "Running Clean..."
+                                }
+                                Text(runningText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                             } else {
-                                if (isDryRun) "Running Preview..." else "Running Clean..."
+                                Icon(
+                                    imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isDryRun) "Preview Clean" else "Run Live Clean",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color.White
+                                )
                             }
-                            Text(runningText, fontSize = 14.sp)
-                        } else {
-                            Icon(
-                                imageVector = if (isDryRun) Icons.Default.Search else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isDryRun) "Preview Clean" else "Run Live Clean",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
+                        }
+
+                        // Up-Down icon button on the right side
+                        Surface(
+                            onClick = { viewModel.toggleDryRun(!isDryRun) },
+                            enabled = !isRunning,
+                            shape = RoundedCornerShape(24.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.5.dp, BoldBorder),
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapVert,
+                                    contentDescription = if (isDryRun) "Switch to Live Clean Mode" else "Switch to Safe Preview Mode",
+                                    tint = BoldPrimary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -987,7 +1025,7 @@ fun MainScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ReceiptLong,
+                                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                                 contentDescription = null,
                                 tint = BoldPrimary,
                                 modifier = Modifier.size(20.dp)
@@ -1076,7 +1114,7 @@ fun MainScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Rule,
+                                    imageVector = Icons.AutoMirrored.Filled.Rule,
                                     contentDescription = null,
                                     tint = BoldBorder.copy(alpha = 0.8f),
                                     modifier = Modifier.size(48.dp)
@@ -1452,7 +1490,7 @@ fun FolderPickerSelectionDialog(
                                 .background(BoldPrimary)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Navigate to Parent Directory",
                                 tint = Color.White,
                                 modifier = Modifier.size(16.dp)
@@ -1758,7 +1796,7 @@ fun SettingsFullScreen(
                         .border(1.dp, borderColor.copy(alpha = 0.5f), CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back to home",
                         tint = primaryColor,
                         modifier = Modifier.size(22.dp)
